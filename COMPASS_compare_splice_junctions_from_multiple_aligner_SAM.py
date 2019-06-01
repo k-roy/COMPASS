@@ -8,8 +8,6 @@ command line usage: python compare_splice_junctions_from_multiple_aligner_SAM.py
 
 takes arbitrary number of SAM files containing alignments
 
-***NOTE ENTIRETY OF ALL SAM FILES ARE LOADED INTO MEMORY***
-
 arguments:
 -each SAM file and aligner need to be separated by a comma, 
 semicolon separating different alignment/aligner name combos as
@@ -28,16 +26,6 @@ junction alignment
 -indicates which aligners agree on the selected junction for each read
 -writes an "integrated" junction file with summary statistics on agreement between aligners for each junction
 
-SRR5582776_bbmap_default.sam,BBMap_default
-SRR5582776_bbmap_all_reads.sam,BBMap_tuned
-SRR5582776_default_STAR_with_annotation_reformatted_cigar.sam,STAR_default_with_annotation
-SRR5582776_default_STAR_no_annotation_reformatted_cigar.sam,STAR_default_without_annotation
-SRR5582776_STAR_with_annotation_all_reads_reformatted_cigar.sam,STAR_noncanonical_with_annotation
-SRR5582776_STAR_no_annotation_all_reads_reformatted_cigar.sam,STAR_noncanonical_without_annotation
-SRR5582776_HISAT2_default_annotated_reformatted_cigar.sam,HISAT2_default_with_annotation
-SRR5582776_HISAT2_all_reads_reformatted_cigar.sam,HISAT2_noncanonical_without_annotation
-SRR5582776_ContextMap2_noncanonical_reformatted_cigar.sam,HISAT2_noncanonical_without_annotation
-SRR5582776_ContextMap2_default_annotated_reformatted_cigar.sam,HISAT2_default_with_annotation
 """
 
 import operator, random
