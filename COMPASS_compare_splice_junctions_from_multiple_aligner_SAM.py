@@ -632,7 +632,7 @@ def process_splice_junctions_from_integrated_alignments(all_aligners, integrated
     integrated_SAM_outfile.close()          
     return total_candidate_introns, total_validated_introns
 
-alignment_aligner_lst = ALIGNMENTS_ALIGNERS.split('~')
+alignment_aligner_lst = ALIGNMENTS_ALIGNERS.split(';')
 aligner_to_processed_alignments = {}
 all_aligners = []
 for alignment_aligner in alignment_aligner_lst:
