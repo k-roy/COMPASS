@@ -1,10 +1,10 @@
-COMPASS_DIR="/mnt/mindrinos/kevinroy/projects/COMPASS/"
+COMPASS_DIR="$HOME/COMPASS/"
 GENOME_DIR=$COMPASS_DIR"S288C_reference_genome_R64-2-1_20150113/"
-READ_LENGTH=60
+READ_LENGTH=150
 STAR_OVERHANG=$(expr $READ_LENGTH - 1)
 FASTA=$GENOME_DIR"S288C_reference_sequence_R64-2-1_20150113_reformatted_chromosome_names.fasta"
 GTF=$GENOME_DIR"saccharomyces_cerevisiae_R64-2-1_20150113_exon_features.gtf"
-NUM_THREAD=24
+NUM_THREAD=8
 
 samtools faidx $FASTA
 picard CreateSequenceDictionary -R $FASTA
@@ -23,7 +23,7 @@ STAR --runThreadN $NUM_THREAD --runMode genomeGenerate --genomeSAindexNbases 10 
 # hisat2-2.2.1
 HISAT2_GENOME_DIR=$GENOME_DIR"HISAT2_annotated_index/"
 mkdir $HISAT2_GENOME_DIR
-GENOME_NAME="Scer_R64_2_1"
+GENOME_NAME= "scerR64"
 SPLICE_SITES=$HISAT2_GENOME_DIR"splicesites.txt"
 EXONS=$HISAT2_GENOME_DIR"exons.txt"
 hisat2_extract_splice_sites.py $GTF_FILE > $SPLICE_SITES
