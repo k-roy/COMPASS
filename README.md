@@ -1,7 +1,7 @@
 Module files
 # picard
 # samtools
-
+# star-2.7.6a
 Dependencies
 # saccharomyces-r64.1 fasta file 
 # saccharmyces gff file
@@ -12,8 +12,6 @@ Dependencies
 # cutadapt-1.18
 
 # BBMap version 38.18
-
-# star-2.7.6a
 
 # hisat2-2.2.1
 
