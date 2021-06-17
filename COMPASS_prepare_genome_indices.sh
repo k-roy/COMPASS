@@ -24,6 +24,6 @@ HISAT2_GENOME_DIR=$GENOME_DIR"HISAT2_annotated_index/"
 GENOME_NAME="Scer_R64_2_1"
 SPLICE_SITES=$HISAT2_GENOME_DIR"splicesites.txt"
 EXONS=$HISAT2_GENOME_DIR"exons.txt"
-hisat2_extract_splice_sites.py $GTF_FILE > $SPLICE_SITES
-hisat2_extract_exons.py $GTF_FILE > $EXONS
+hisat2_extract_splice_sites.py $GTF > $SPLICE_SITES
+hisat2_extract_exons.py $GTF > $EXONS
 hisat2-build -p $NUM_THREAD --ss $SPLICE_SITES --exon $EXONS $FASTA $HISAT2_GENOME_DIR$GENOME_NAME
