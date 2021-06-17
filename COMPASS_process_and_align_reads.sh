@@ -71,31 +71,13 @@
 ##################################################################################################################################
 READ_LENGTH= 150
 list_data_folders=$(find /u/project/guillom/kevinh97/usftp21.novogene.com/raw_data/ -type f)
-list_data_files=$list_data_folders$(find $list_data_folders -name *.gz)
+list_data_files=$(find $list_data_folders -name "*.gz")
 
-for read1 in list_data_folders/*_1.fq.gz; do
-  read2=$(echo $read1| sed 's/_1.fq.gz/_2.fq.gz/')
-  trimmed_R1=$TRIMMED_DIR${read1}"_trimmed_R1.fastq"
-  trimmed_R2=$TRIMMED_DIR${read2}"_trimmed_R2.fastq"
-  #cutadapt --overlap 2 -j 0 -q 20,20 -g "T{100}" -g AATGATACGGCGACCACCGAGATCTACACTCTTTCCCTACACGACGCTCTTCCGATCT -A GATCGGAAGAGCACACGTCTGAACTCCAGTCACATCACGATCTCGTATGCCGTCTTCTGCTTG -A "A{100}" -n 2 --trim-n  --minimum-length 50 -o trimmed_R1 -p trimmed_R2 ${read1} ${read2}
-  print read1
-  print read2
-done
-#while getopts A:S:L: flag
-#do
-#    case "${flag}" in
-#	 A) ACCESSION=${OPTARG};;
- #       S) SAMPLE=${OPTARG};;
-	#	L) READ_LENGTH=${OPTARG};;
-   # esac
-#done
-#echo "ACCESSION: $ACCESSION";
-#echo "SAMPLE: $SAMPLE";
-#echo "READ_LENGTH: $READ_LENGTH";
+#echo $list_data_files
 
 NUM_THREADS=8
 
-COMPASS_DIR=$HOME"/COMPASS/"
+COMPASS_DIR="/u/project/guillom/kevinh97/COMPASS/"
 OUT_DIR=$COMPASS_DIR"processed_data/"
 mkdir $OUT_DIR
 ## ASSIGN AND CREATE SUBDIRECTORIES
@@ -107,19 +89,58 @@ ALIGNMENTS_DIR=$OUT_DIR"alignments/"
 mkdir $ALIGNMENTS_DIR
 
 GENOME_DIR=$COMPASS_DIR"S288C_reference_genome_R64-2-1_20150113/"
-FASTA=$GENOME_DIR"S288C_reference_sequence_R64-2-1_20150113_reformatted_chromosome_names.fasta"
-GTF=$GENOME_DIR"saccharomyces_cerevisiae_R64-2-1_20150113_exon_features.gtf"
+FASTA=$GENOME_DIR"Saccharomyces_cerevisiae.R64-1-1.dna.toplevel.fa"
+GTF=$GENOME_DIR"Saccharomyces_cerevisiae.R64-1-1.104.gtf"
 
 STAR_GENOME_DIR=$GENOME_DIR"STAR_annotated_"$READ_LENGTH"_bp_SJDB_index/"
 STAR_OVERHANG=$(expr $READ_LENGTH - 1)
 
 HISAT2_GENOME_DIR=$GENOME_DIR"HISAT2_annotated_index/"
-GENOME_NAME="Scer64"
+GENOME_NAME="Scer_R64_2_1"
 
 SPLICE_SITES=$HISAT2_GENOME_DIR"splicesites.txt"
 EXONS=$HISAT2_GENOME_DIR"exons.txt"
 
 SAMFIXCIGAR="/u/home/k/kevinh97/jvarkit/dist/samfixcigar.jar"
+trimmed_R1=$TRIMMED_DIR"_trimmed_R1.fastq"
+trimmed_R2=$TRIMMED_DIR"_trimmed_R2.fastq"
+numbered_R1=$NUMBERED_READS_DIR"_numbered_R1.fastq"
+numbered_R2=$NUMBERED_READS_DIR"_numbered_R2.fastq"
+
+for read1 in $list_data_folders/*_1.fq.gz; do
+  read2=$(echo $read1| sed 's/_1.fq.gz/_2.fq.gz/')
+  trimmed_R1=$TRIMMED_DIR${read1}"_trimmed_R1.fastq"
+  trimmed_R2=$TRIMMED_DIR${read2}"_trimmed_R2.fastq"
+  cutadapt --overlap 2 -j 0 -q 20,20 -g "T{100}" -g AATGATACGGCGACCACCGAGATCTACACTCTTTCCCTACACGACGCTCTTCCGATCT -A GATCGGAAGAGCACACGTCTGAACTCCAGTCACATCACGATCTCGTATGCCGTCTTCTGCTTG -A "A{100}" -n 2 --trim-n  --minimum-length 50 -o $trimmed_R1 -p $trimmed_R2 ${read1} ${read2}
+  echo $trimmed_R1
+  echo $trimmed_R2
+done
+
+for i in $trimmed_R1/*_R1.fastq; do
+  numbered_R1=$NUMBERED_READS_DIR"_numbered_R1.fastq"
+  cat < $trimmed_R1 | awk '{print (NR%4 == 1) ? "@" ++i "_R1": $0}' > $numbered_R1
+done
+
+for x in $trimmed_R2/*_R2.fastq; do
+  numbered_R2=$NUMBERED_READS_DIR"_numbered_R2.fastq"
+  cat < $trimmed_R2 | awk '{print (NR%4 == 1) ? "@" ++i "_R2": $0}' > $numbered_R2
+#for read1 in list_data_folders/*_1.fq.gz; do
+  #read2=$(echo $read1| sed 's/_1.fq.gz/_2.fq.gz/')
+ # trimmed_R1=$TRIMMED_DIR${read1}"_trimmed_R1.fastq"
+#  trimmed_R2=$TRIMMED_DIR${read2}"_trimmed_R2.fastq"
+  #cutadapt --overlap 2 -j 0 -q 20,20 -g "T{100}" -g AATGATACGGCGACCACCGAGATCTACACTCTTTCCCTACACGACGCTCTTCCGATCT -A GATCGGAAGAGCACACGTCTGAACTCCAGTCACATCACGATCTCGTATGCCGTCTTCTGCTTG -A "A{100}" -n 2 --trim-n  --minimum-length 50 -o trimmed_R1 -p trimmed_R2 ${read1} ${read2}
+#done
+#while getopts A:S:L: flag
+#do
+#    case "${flag}" in
+#	 A) ACCESSION=${OPTARG};;
+ #       S) SAMPLE=${OPTARG};;
+	#	L) READ_LENGTH=${OPTARG};;
+   # esac
+#done
+#echo "ACCESSION: $ACCESSION";
+#echo "SAMPLE: $SAMPLE";
+#echo "READ_LENGTH: $READ_LENGTH";
 
 #RAW_FASTQ_DIR=$list_data_folders
 
@@ -143,9 +164,6 @@ SAMFIXCIGAR="/u/home/k/kevinh97/jvarkit/dist/samfixcigar.jar"
 ## a means trim sequence at end of read1
 ## -A means trim sequence at end of read2
 ## -n 2 means trim first adapter specified by -A, then second adapter specified by -A in that order
-
-cat < $trimmed_R1 | awk '{print (NR%4 == 1) ? "@" ++i "_R1": $0}' > $numbered_R1
-cat < $trimmed_R2 | awk '{print (NR%4 == 1) ? "@" ++i "_R2": $0}' > $numbered_R2
 
 cd $ALIGNMENTS_DIR
 ## MAP READS WITH BBMAP
