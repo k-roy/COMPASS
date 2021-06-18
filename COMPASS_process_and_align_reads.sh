@@ -23,43 +23,43 @@
 # ./gradlew samfixcigar
 
 ## revise script
-cd /mnt/mindrinos/kevinroy/projects/COMPASS/
-echo '' > COMPASS_process_reads_and_align_server_version.sh
-nano COMPASS_process_reads_and_align_server_version.sh
+#cd /mnt/mindrinos/kevinroy/projects/COMPASS/
+#echo '' > COMPASS_process_reads_and_align_server_version.sh
+#nano COMPASS_process_reads_and_align_server_version.sh
 
 # batch processing Aslanzadeh et al.
-ACCESSION="PRJNA387451"
-READ_LENGTH=150
-for i in {5582776..5582781};
-do SAMPLE="SRR"$i
-echo $SAMPLE;
-echo '' > "$SAMPLE.log"
-nohup sh COMPASS_process_reads_and_align_server_version.sh -A "$ACCESSION" -S "$SAMPLE" -L "$READ_LENGTH" > "$SAMPLE.log" &
-done
+#ACCESSION="PRJNA387451"
+#READ_LENGTH=150
+#for i in {5582776..5582781};
+#do SAMPLE="SRR"$i
+#echo $SAMPLE;
+#echo '' > "$SAMPLE.log"
+#nohup sh COMPASS_process_reads_and_align_server_version.sh -A "$ACCESSION" -S "$SAMPLE" -L "$READ_LENGTH" > "$SAMPLE.log" &
+#done
 
 ## batch processing Talkish et al.
-ACCESSION="PRJNA354419"
-READ_LENGTH=150
-for i in {5041706..5041709};
-do SAMPLE="SRR"$i
-echo $SAMPLE;
-echo '' > "$SAMPLE.log"
-nohup sh COMPASS_process_reads_and_align_server_version.sh -A "$ACCESSION" -S "$SAMPLE" -L "$READ_LENGTH" > "$SAMPLE.log" &
-done
+#ACCESSION="PRJNA354419"
+#READ_LENGTH=150
+#for i in {5041706..5041709};
+#do SAMPLE="SRR"$i
+#echo $SAMPLE;
+#echo '' > "$SAMPLE.log"
+#nohup sh COMPASS_process_reads_and_align_server_version.sh -A "$ACCESSION" -S "$SAMPLE" -L "$READ_LENGTH" > "$SAMPLE.log" &
+#done
 
 # batch processing prp18/Roy et al.
-DIR="/mnt/mindrinos/kevinroy/projects/COMPASS/"
-ACCESSION="PRJNA544962"
-LOG_DIR=$DIR$ACCESSION"_log_files/"
-mkdir $LOG_DIR
-READ_LENGTH=150
-for i in {9130287..9130292};
-do SAMPLE="SRR"$i
-log_out=$LOG_DIR$SAMPLE"_COMPASS_process_reads_and_align.log"
-echo $SAMPLE;
-echo '' > $log_out
-nohup sh COMPASS_process_reads_and_align_server_version.sh -A "$ACCESSION" -S "$SAMPLE" -L "$READ_LENGTH" > $log_out &
-done
+#DIR="/mnt/mindrinos/kevinroy/projects/COMPASS/"
+#ACCESSION="PRJNA544962"
+#LOG_DIR=$DIR$ACCESSION"_log_files/"
+#mkdir $LOG_DIR
+#READ_LENGTH=150
+#for i in {9130287..9130292};
+#do SAMPLE="SRR"$i
+#log_out=$LOG_DIR$SAMPLE"_COMPASS_process_reads_and_align.log"
+#echo $SAMPLE;
+#echo '' > $log_out
+#nohup sh COMPASS_process_reads_and_align_server_version.sh -A "$ACCESSION" -S "$SAMPLE" -L "$READ_LENGTH" > $log_out &
+#done
 
 ## single sample processing
 # ACCESSION="PRJNA387451"
@@ -69,22 +69,15 @@ done
 # nohup sh COMPASS_process_reads_and_align_server_version.sh -A "$ACCESSION" -S "$SAMPLE" -L "$READ_LENGTH" > "$SAMPLE.log" &
 
 ##################################################################################################################################
+READ_LENGTH= 150
+list_data_folders=$(find /u/project/guillom/kevinh97/usftp21.novogene.com/raw_data/ -type f)
+list_data_files=$(find $list_data_folders -name "*.gz")
 
-while getopts A:S:L: flag
-do
-    case "${flag}" in
-		A) ACCESSION=${OPTARG};;
-        S) SAMPLE=${OPTARG};;
-		L) READ_LENGTH=${OPTARG};;
-    esac
-done
-echo "ACCESSION: $ACCESSION";
-echo "SAMPLE: $SAMPLE";
-echo "READ_LENGTH: $READ_LENGTH";
+#echo $list_data_files
 
-NUM_THREADS=24
+NUM_THREADS=8
 
-COMPASS_DIR="/mnt/mindrinos/kevinroy/projects/COMPASS/"
+COMPASS_DIR="/u/project/guillom/kevinh97/COMPASS/"
 OUT_DIR=$COMPASS_DIR"processed_data/"
 mkdir $OUT_DIR
 ## ASSIGN AND CREATE SUBDIRECTORIES
@@ -96,8 +89,8 @@ ALIGNMENTS_DIR=$OUT_DIR"alignments/"
 mkdir $ALIGNMENTS_DIR
 
 GENOME_DIR=$COMPASS_DIR"S288C_reference_genome_R64-2-1_20150113/"
-FASTA=$GENOME_DIR"S288C_reference_sequence_R64-2-1_20150113_reformatted_chromosome_names.fasta"
-GTF=$GENOME_DIR"saccharomyces_cerevisiae_R64-2-1_20150113_exon_features.gtf"
+FASTA=$GENOME_DIR"Saccharomyces_cerevisiae.R64-1-1.dna.toplevel.fa"
+GTF=$GENOME_DIR"Saccharomyces_cerevisiae.R64-1-1.104.gtf"
 
 STAR_GENOME_DIR=$GENOME_DIR"STAR_annotated_"$READ_LENGTH"_bp_SJDB_index/"
 STAR_OVERHANG=$(expr $READ_LENGTH - 1)
@@ -108,21 +101,60 @@ GENOME_NAME="Scer_R64_2_1"
 SPLICE_SITES=$HISAT2_GENOME_DIR"splicesites.txt"
 EXONS=$HISAT2_GENOME_DIR"exons.txt"
 
-SAMFIXCIGAR="/mnt/mindrinos/kevinroy/projects/COMPASS/jvarkit/dist/samfixcigar.jar"
+SAMFIXCIGAR="/u/home/k/kevinh97/jvarkit/dist/samfixcigar.jar"
+trimmed_R1=$TRIMMED_DIR"_trimmed_R1.fastq"
+trimmed_R2=$TRIMMED_DIR"_trimmed_R2.fastq"
+numbered_R1=$NUMBERED_READS_DIR"_numbered_R1.fastq"
+numbered_R2=$NUMBERED_READS_DIR"_numbered_R2.fastq"
 
-RAW_FASTQ_DIR="/mnt/mindrinos/kevinroy/projects/COMPASS/raw_data/"$ACCESSION"/"$SAMPLE"/"
+for read1 in $list_data_folders/*_1.fq.gz; do
+  read2=$(echo $read1| sed 's/_1.fq.gz/_2.fq.gz/')
+  trimmed_R1=$TRIMMED_DIR${read1}"_trimmed_R1.fastq"
+  trimmed_R2=$TRIMMED_DIR${read2}"_trimmed_R2.fastq"
+  cutadapt --overlap 2 -j 0 -q 20,20 -g "T{100}" -g AATGATACGGCGACCACCGAGATCTACACTCTTTCCCTACACGACGCTCTTCCGATCT -A GATCGGAAGAGCACACGTCTGAACTCCAGTCACATCACGATCTCGTATGCCGTCTTCTGCTTG -A "A{100}" -n 2 --trim-n  --minimum-length 50 -o $trimmed_R1 -p $trimmed_R2 ${read1} ${read2}
+  echo $trimmed_R1
+  echo $trimmed_R2
+done
 
-raw_R1=$RAW_FASTQ_DIR$SAMPLE"_1.fastq.gz"
-raw_R2=$RAW_FASTQ_DIR$SAMPLE"_2.fastq.gz"
-trimmed_R1=$TRIMMED_DIR$SAMPLE"_trimmed_R1.fastq"
-trimmed_R2=$TRIMMED_DIR$SAMPLE"_trimmed_R2.fastq"
-numbered_R1=$NUMBERED_READS_DIR$SAMPLE"_numbered_R1.fastq"
-numbered_R2=$NUMBERED_READS_DIR$SAMPLE"_numbered_R2.fastq"
+for i in $trimmed_R1/*_R1.fastq; do
+  numbered_R1=$NUMBERED_READS_DIR"_numbered_R1.fastq"
+  cat < $trimmed_R1 | awk '{print (NR%4 == 1) ? "@" ++i "_R1": $0}' > $numbered_R1
+done
+
+for x in $trimmed_R2/*_R2.fastq; do
+  numbered_R2=$NUMBERED_READS_DIR"_numbered_R2.fastq"
+  cat < $trimmed_R2 | awk '{print (NR%4 == 1) ? "@" ++i "_R2": $0}' > $numbered_R2
+#for read1 in list_data_folders/*_1.fq.gz; do
+  #read2=$(echo $read1| sed 's/_1.fq.gz/_2.fq.gz/')
+ # trimmed_R1=$TRIMMED_DIR${read1}"_trimmed_R1.fastq"
+#  trimmed_R2=$TRIMMED_DIR${read2}"_trimmed_R2.fastq"
+  #cutadapt --overlap 2 -j 0 -q 20,20 -g "T{100}" -g AATGATACGGCGACCACCGAGATCTACACTCTTTCCCTACACGACGCTCTTCCGATCT -A GATCGGAAGAGCACACGTCTGAACTCCAGTCACATCACGATCTCGTATGCCGTCTTCTGCTTG -A "A{100}" -n 2 --trim-n  --minimum-length 50 -o trimmed_R1 -p trimmed_R2 ${read1} ${read2}
+#done
+#while getopts A:S:L: flag
+#do
+#    case "${flag}" in
+#	 A) ACCESSION=${OPTARG};;
+ #       S) SAMPLE=${OPTARG};;
+	#	L) READ_LENGTH=${OPTARG};;
+   # esac
+#done
+#echo "ACCESSION: $ACCESSION";
+#echo "SAMPLE: $SAMPLE";
+#echo "READ_LENGTH: $READ_LENGTH";
+
+#RAW_FASTQ_DIR=$list_data_folders
+
+#raw_R1=$RAW_FASTQ_DIR/*_1.fq.gz
+#raw_R2=$RAW_FASTQ_DIR/*_2.fq.gz
+#trimmed_R1=$TRIMMED_DIR$SAMPLE"_trimmed_R1.fastq"
+#trimmed_R2=$TRIMMED_DIR$SAMPLE"_trimmed_R2.fastq"
+#numbered_R1=$NUMBERED_READS_DIR$SAMPLE"_numbered_R1.fastq"
+#numbered_R2=$NUMBERED_READS_DIR$SAMPLE"_numbered_R2.fastq"
 ## TRIM TRUSEQ ADAPTER AND POLY-A TAILS IN ONE STEP WITH CUTADAPT
 ## cutadapt version 1.18
 
-cutadapt --overlap 2 -j 1 -q 20,20 -g "T{100}" -a AGATCGGAAGAGC -A AGATCGGAAGAGC -A "A{100}" \
--n 2 --trim-n --minimum-length 50 --max-n 4 -o $trimmed_R1 -p $trimmed_R2 $raw_R1 $raw_R2
+#cutadapt --overlap 2 -j 1 -q 20,20 -g "T{100}" -a AGATCGGAAGAGC -A AGATCGGAAGAGC -A "A{100}" \
+#-n 2 --trim-n --minimum-length 50 --max-n 4 -o $trimmed_R1 -p $trimmed_R2 $raw_R1 $raw_R2
 
 # ## --overlap 2 specifies that a partial match of 2 bases of the adapter SAMPLE will allow trimming
 ## -j 0 specifies auto-detection for optimal number of cores to use
@@ -132,9 +164,6 @@ cutadapt --overlap 2 -j 1 -q 20,20 -g "T{100}" -a AGATCGGAAGAGC -A AGATCGGAAGAGC
 ## a means trim sequence at end of read1
 ## -A means trim sequence at end of read2
 ## -n 2 means trim first adapter specified by -A, then second adapter specified by -A in that order
-
-cat < $trimmed_R1 | awk '{print (NR%4 == 1) ? "@" ++i "_R1": $0}' > $numbered_R1
-cat < $trimmed_R2 | awk '{print (NR%4 == 1) ? "@" ++i "_R2": $0}' > $numbered_R2
 
 cd $ALIGNMENTS_DIR
 ## MAP READS WITH BBMAP
