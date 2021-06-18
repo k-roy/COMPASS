@@ -6,8 +6,8 @@ Created on Wed Sep 30 11:26:31 2020
 @author: kevinroy
 """
 import pandas as pd
-GFF_infilename = '/Volumes/SPxDrive/COMPASS/S288C_reference_genome_R64-2-1_20150113/saccharomyces_cerevisiae_R64-2-1_20150113.gff'
-intron_outfilename = '/Volumes/SPxDrive/COMPASS/S288C_reference_genome_R64-2-1_20150113/saccharomyces_cerevisiae_R64-2-1_20150113_introns.tsv'
+GFF_infilename = '/u/home/k/kevinh97/project-guillom/COMPASS/S288C_reference_genome_R64-2-1_20150113/saccharomyces_cerevisiae_R64-2-1_20150113_no_seq.gtf'
+intron_outfilename = '/u/home/k/kevinh97/project-guillom/COMPASS/S288C_reference_genome_R64-2-1_20150113/saccharomyces_cerevisiae_R64-2-1_20150113_introns.tsv'
   
 def get_attribute_field(attribute, field):
     '''
