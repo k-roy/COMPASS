@@ -116,12 +116,12 @@ for read1 in $list_data_folders/*_1.fq.gz; do
   echo $trimmed_R2
 done
 
-for i in $trimmed_R1/*_R1.fastq; do
+for i in $TRIMMED_DIR*_trimmed_R1.fastq; do
   numbered_R1=$NUMBERED_READS_DIR"_numbered_R1.fastq"
   cat < $trimmed_R1 | awk '{print (NR%4 == 1) ? "@" ++i "_R1": $0}' > $numbered_R1
 done
 
-for x in $trimmed_R2/*_R2.fastq; do
+for x in $TRIMMED_DIR*_R2.fastq; do
   numbered_R2=$NUMBERED_READS_DIR"_numbered_R2.fastq"
   cat < $trimmed_R2 | awk '{print (NR%4 == 1) ? "@" ++i "_R2": $0}' > $numbered_R2
 #for read1 in list_data_folders/*_1.fq.gz; do
@@ -196,7 +196,7 @@ STAR --runThreadN $NUM_THREADS --genomeDir $STAR_GENOME_DIR --sjdbOverhang $STAR
 --alignEndsType EndToEnd --outSAMattributes NH HI NM MD AS nM jM jI XS \
 --scoreGapNoncan 0 --scoreGapGCAG 0 --scoreGapATAC 0
 samtools view -bS -o $out".bam" $out"Aligned.out.sam" 
-rm $out"Aligned.out.sam" 
+#rm $out"Aligned.out.sam"
 
 HISAT2_DIR=$ALIGNMENTS_DIR"HISAT2_default/"
 mkdir $HISAT2_DIR
@@ -219,7 +219,7 @@ hisat2 \
 	--summary-file $HISAT2_DIR$SAMPLE"_HISAT2_summary.txt" \
 	--new-summary
 samtools view -bS -o $out".bam" $out".sam" 
-rm $out".sam"
+#rm $out".sam"
 
 HISAT2_DIR=$ALIGNMENTS_DIR"HISAT2_noncanonical/"
 mkdir $HISAT2_DIR
@@ -243,7 +243,7 @@ hisat2 \
 	--summary-file $HISAT2_DIR$SAMPLE"_HISAT2_summary.txt" \
 	--new-summary
 samtools view -bS -o $out".bam" $out".sam" 
-rm $out".sam"
+#rm $out".sam"
 
 for RUN_MODE in bbmap/ STAR_default/ STAR_noncanonical/ HISAT2_default/ HISAT2_noncanonical/;
 do echo $RUN_MODE;
