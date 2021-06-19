@@ -170,7 +170,7 @@ cd $ALIGNMENTS_DIR
 ##BBMap bbmap.sh version 38.32
 BBMAP_DIR=$ALIGNMENTS_DIR"bbmap/"
 mkdir $BBMAP_DIR
-out=$BBMAP_DIR$SAMPLE
+out=$BBMAP_DIR
 bbmap.sh in1=$numbered_R1 in2=$numbered_R2 ref=$FASTA out=$out".bam" \
 nhtag=t mdtag=t nhtag=t xmtag=t  amtag=t nmtag=t tipsearch=2000 pairlen=10000
 
@@ -178,7 +178,7 @@ nhtag=t mdtag=t nhtag=t xmtag=t  amtag=t nmtag=t tipsearch=2000 pairlen=10000
 ## STAR version 2.7.0d
 STAR_DIR=$ALIGNMENTS_DIR"STAR_default/"
 mkdir $STAR_DIR
-out=$STAR_DIR$SAMPLE
+out=$STAR_DIR
 STAR --runThreadN $NUM_THREADS --genomeDir $STAR_GENOME_DIR --sjdbOverhang $STAR_OVERHANG \
 --readFilesIn $numbered_R1 $numbered_R2 --outFileNamePrefix $out \
 --alignEndsType EndToEnd --outSAMattributes NH HI NM MD AS nM jM jI XS
@@ -190,7 +190,7 @@ samtools view -bS -o $out".bam" $out"Aligned.out.sam"
 
 STAR_DIR=$ALIGNMENTS_DIR"STAR_noncanonical/"
 mkdir $STAR_DIR
-out=$STAR_DIR$SAMPLE
+out=$STAR_DIR
 STAR --runThreadN $NUM_THREADS --genomeDir $STAR_GENOME_DIR --sjdbOverhang $STAR_OVERHANG \
 --readFilesIn $numbered_R1 $numbered_R2 --outFileNamePrefix $out \
 --alignEndsType EndToEnd --outSAMattributes NH HI NM MD AS nM jM jI XS \
@@ -201,7 +201,7 @@ samtools view -bS -o $out".bam" $out"Aligned.out.sam"
 HISAT2_DIR=$ALIGNMENTS_DIR"HISAT2_default/"
 mkdir $HISAT2_DIR
 ## MAP READS WITH HISAT2
-out=$HISAT2_DIR$SAMPLE
+out=$HISAT2_DIR
 hisat2 \
 	--known-splicesite-infile $SPLICE_SITES \
 	--no-softclip \
@@ -215,8 +215,8 @@ hisat2 \
 	--min-intronlen 20 \
 	--max-intronlen 10000 \
 	--rna-strandness RF \
-	--novel-splicesite-outfile $HISAT2_DIR$SAMPLE"_HISAT2_splice_junctions.txt" \
-	--summary-file $HISAT2_DIR$SAMPLE"_HISAT2_summary.txt" \
+	--novel-splicesite-outfile $HISAT2_DIR"_HISAT2_splice_junctions.txt" \
+	--summary-file $HISAT2_DIR"_HISAT2_summary.txt" \
 	--new-summary
 samtools view -bS -o $out".bam" $out".sam" 
 #rm $out".sam"
@@ -224,7 +224,7 @@ samtools view -bS -o $out".bam" $out".sam"
 HISAT2_DIR=$ALIGNMENTS_DIR"HISAT2_noncanonical/"
 mkdir $HISAT2_DIR
 ## MAP READS WITH HISAT2
-out=$HISAT2_DIR$SAMPLE
+out=$HISAT2_DIR
 hisat2 \
 	--known-splicesite-infile $SPLICE_SITES \
 	--no-softclip \
@@ -239,8 +239,8 @@ hisat2 \
 	--max-intronlen 10000 \
 	--pen-noncansplice 0 \
 	--rna-strandness RF \
-	--novel-splicesite-outfile $HISAT2_DIR$SAMPLE"_HISAT2_splice_junctions.txt" \
-	--summary-file $HISAT2_DIR$SAMPLE"_HISAT2_summary.txt" \
+	--novel-splicesite-outfile $HISAT2_DIR"_HISAT2_splice_junctions.txt" \
+	--summary-file $HISAT2_DIR"_HISAT2_summary.txt" \
 	--new-summary
 samtools view -bS -o $out".bam" $out".sam" 
 #rm $out".sam"
