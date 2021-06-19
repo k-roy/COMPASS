@@ -183,7 +183,7 @@ STAR --runThreadN $NUM_THREADS --genomeDir $STAR_GENOME_DIR --sjdbOverhang $STAR
 --readFilesIn $numbered_R1 $numbered_R2 --outFileNamePrefix $out \
 --alignEndsType EndToEnd --outSAMattributes NH HI NM MD AS nM jM jI XS
 samtools view -bS -o $out".bam" $out"Aligned.out.sam" 
-rm $out"Aligned.out.sam" 
+#rm $out"Aligned.out.sam"
 
 ## MAP READS WITH STAR USING MODIFIED SETTINGS TO ALLOW FOR NON-CANONICAL JUNCTIONS
 ## STAR version 2.7.0d
