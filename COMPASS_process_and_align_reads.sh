@@ -107,23 +107,31 @@ trimmed_R2=$TRIMMED_DIR"_trimmed_R2.fastq"
 numbered_R1=$NUMBERED_READS_DIR"_numbered_R1.fastq"
 numbered_R2=$NUMBERED_READS_DIR"_numbered_R2.fastq"
 
-for read1 in $list_data_folders/*_1.fq.gz; do
+for read1 in $list_data_files/*_1.fq.gz; do
   read2=$(echo $read1| sed 's/_1.fq.gz/_2.fq.gz/')
-  trimmed_R1=$TRIMMED_DIR${read1}"_trimmed_R1.fastq"
-  trimmed_R2=$TRIMMED_DIR${read2}"_trimmed_R2.fastq"
+  f=$(basename -- $read1)
+  g=$(basename -- $read2)
+  #echo $f
+  trimmed_R1=$TRIMMED_DIR${f}"_trimmed_R1.fastq"
+  trimmed_R2=$TRIMMED_DIR${g}"_trimmed_R2.fastq"
   cutadapt --overlap 2 -j 0 -q 20,20 -g "T{100}" -g AATGATACGGCGACCACCGAGATCTACACTCTTTCCCTACACGACGCTCTTCCGATCT -A GATCGGAAGAGCACACGTCTGAACTCCAGTCACATCACGATCTCGTATGCCGTCTTCTGCTTG -A "A{100}" -n 2 --trim-n  --minimum-length 50 -o $trimmed_R1 -p $trimmed_R2 ${read1} ${read2}
-  echo $trimmed_R1
-  echo $trimmed_R2
+  #cutadapt --overlap 2 -j 0 -q 20,20 -g "T{100}" -g AATGATACGGCGACCACCGAGATCTACACTCTTTCCCTACACGACGCTCTTCCGATCT -A GATCGGAAGAGCACACGTCTGAACTCCAGTCACATCACGATCTCGTATGCCGTCTTCTGCTTG -A "A{100}" -n 2 --trim-n  --minimum-length 50 -o ${read1}_R1.fastq -p ${read2}_R2.fastq ${read1} ${read2}
+  #echo $trimmed_R1
+  #echo $trimmed_R2
 done
 
-for i in $TRIMMED_DIR*_trimmed_R1.fastq; do
-  numbered_R1=$NUMBERED_READS_DIR"_numbered_R1.fastq"
-  cat < $trimmed_R1 | awk '{print (NR%4 == 1) ? "@" ++i "_R1": $0}' > $numbered_R1
+for i in $TRIMMED_DIR/*_trimmed_R1.fastq; do
+  f=$(basename -- $i)
+  numbered_R1=$NUMBERED_READS_DIR${f}"_numbered_R1.fastq"
+  cat < $i | awk '{print (NR%4 == 1) ? "@" ++i "_R1": $0}' > $numbered_R1
 done
 
-for x in $TRIMMED_DIR*_R2.fastq; do
-  numbered_R2=$NUMBERED_READS_DIR"_numbered_R2.fastq"
-  cat < $trimmed_R2 | awk '{print (NR%4 == 1) ? "@" ++i "_R2": $0}' > $numbered_R2
+for x in $TRIMMED_DIR/*_R2.fastq; do
+  g=$(basename -- $x)
+  numbered_R2=$NUMBERED_READS_DIR${g}"_numbered_R2.fastq"
+  cat < $x | awk '{print (NR%4 == 1) ? "@" ++i "_R2": $0}' > $numbered_R2
+done
+
 #for read1 in list_data_folders/*_1.fq.gz; do
   #read2=$(echo $read1| sed 's/_1.fq.gz/_2.fq.gz/')
  # trimmed_R1=$TRIMMED_DIR${read1}"_trimmed_R1.fastq"
@@ -171,18 +179,32 @@ cd $ALIGNMENTS_DIR
 BBMAP_DIR=$ALIGNMENTS_DIR"bbmap/"
 mkdir $BBMAP_DIR
 out=$BBMAP_DIR
-bbmap.sh in1=$numbered_R1 in2=$numbered_R2 ref=$FASTA out=$out".bam" \
-nhtag=t mdtag=t nhtag=t xmtag=t  amtag=t nmtag=t tipsearch=2000 pairlen=10000
+
+for read1 in $NUMBERED_READS_DIR*_trimmed_R1.fastq_numbered_R1.fastq; do
+  read2=$(echo $read1| sed 's/1.fq.gz_trimmed_R1.fastq_numbered_R1.fastq/2.fq.gz_trimmed_R2.fastq_numbered_R2.fastq/')
+  a=$(basename -- $read1)
+  b=$(basename -- $read2)
+  out=$BBMAP_DIR
+  /u/project/guillom/kevinh97/bbmap/bbmap.sh -Xmx16g in1=$read1 in2=$read2 ref=$FASTA out=$out${a}".sam" nhtag=t mdtag=t nhtag=t xmtag=t  amtag=t nmtag=t tipsearch=2000 pairlen=10000
+done
+
+for read1 in $NUMBERED_READS_DIR/*_trimmed_R1.fastq_numbered_R1.fastq; do
+  read2=$(echo $read1| sed 's/1.fq.gz_trimmed_R1.fastq_numbered_R1.fastq/2.fq.gz_trimmed_R2.fastq_numbered_R2.fastq/')
+  a=$(basename -- $read1)
+  b=$(basename -- $read2)
+  out=$STAR_DIR
+  STAR --runThreadN $NUM_THREADS --genomeDir $STAR_GENOME_DIR --sjdbOverhang $STAR_OVERHANG --readFilesIn ${read1} ${read2} --outFileNamePrefix $out${a}".sam" --alignEndsType EndToEnd --outSAMattributes NH HI NM MD AS nM jM jI XS
+done
 
 ## MAP READS WITH STAR USING DEFAULT SETTINGS
 ## STAR version 2.7.0d
-STAR_DIR=$ALIGNMENTS_DIR"STAR_default/"
-mkdir $STAR_DIR
-out=$STAR_DIR
-STAR --runThreadN $NUM_THREADS --genomeDir $STAR_GENOME_DIR --sjdbOverhang $STAR_OVERHANG \
---readFilesIn $numbered_R1 $numbered_R2 --outFileNamePrefix $out \
---alignEndsType EndToEnd --outSAMattributes NH HI NM MD AS nM jM jI XS
-samtools view -bS -o $out".bam" $out"Aligned.out.sam" 
+#STAR_DIR=$ALIGNMENTS_DIR"STAR_default/"
+#mkdir $STAR_DIR
+#out=$STAR_DIR
+#STAR --runThreadN $NUM_THREADS --genomeDir $STAR_GENOME_DIR --sjdbOverhang $STAR_OVERHANG \
+#--readFilesIn $numbered_R1 $numbered_R2 --outFileNamePrefix $out \
+#--alignEndsType EndToEnd --outSAMattributes NH HI NM MD AS nM jM jI XS
+#samtools view -bS -o $out".bam" $out"Aligned.out.sam"
 #rm $out"Aligned.out.sam"
 
 ## MAP READS WITH STAR USING MODIFIED SETTINGS TO ALLOW FOR NON-CANONICAL JUNCTIONS
