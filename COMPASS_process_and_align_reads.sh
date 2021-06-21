@@ -114,7 +114,7 @@ for read1 in $list_data_files/*_1.fq.gz; do
   #echo $f
   trimmed_R1=$TRIMMED_DIR${f}"_trimmed_R1.fastq"
   trimmed_R2=$TRIMMED_DIR${g}"_trimmed_R2.fastq"
-  cutadapt --overlap 2 -j 0 -q 20,20 -g "T{100}" -g AATGATACGGCGACCACCGAGATCTACACTCTTTCCCTACACGACGCTCTTCCGATCT -A GATCGGAAGAGCACACGTCTGAACTCCAGTCACATCACGATCTCGTATGCCGTCTTCTGCTTG -A "A{100}" -n 2 --trim-n  --minimum-length 50 -o $trimmed_R1 -p $trimmed_R2 ${read1} ${read2}
+  cutadapt --overlap 2 -j 0 -q 20,20 -g "T{100}" -g AATGATACGGCGACCACCGAGATCTACACTCTTTCCCTACACGACGCTCTTCCGATCT -A GATCGGAAGAGCACACGTCTGAACTCCAGTCACATCACGATCTCGTATGCCGTCTTCTGCTTG -A "A{100}" -n 2 --trim-n  --minimum-length 50 --max-n 4 -o $trimmed_R1 -p $trimmed_R2 ${read1} ${read2}
   #cutadapt --overlap 2 -j 0 -q 20,20 -g "T{100}" -g AATGATACGGCGACCACCGAGATCTACACTCTTTCCCTACACGACGCTCTTCCGATCT -A GATCGGAAGAGCACACGTCTGAACTCCAGTCACATCACGATCTCGTATGCCGTCTTCTGCTTG -A "A{100}" -n 2 --trim-n  --minimum-length 50 -o ${read1}_R1.fastq -p ${read2}_R2.fastq ${read1} ${read2}
   #echo $trimmed_R1
   #echo $trimmed_R2
@@ -196,6 +196,13 @@ for read1 in $NUMBERED_READS_DIR/*_trimmed_R1.fastq_numbered_R1.fastq; do
   STAR --runThreadN $NUM_THREADS --genomeDir $STAR_GENOME_DIR --sjdbOverhang $STAR_OVERHANG --readFilesIn ${read1} ${read2} --outFileNamePrefix $out${a}".sam" --alignEndsType EndToEnd --outSAMattributes NH HI NM MD AS nM jM jI XS
 done
 
+for read1 in $NUMBERED_READS_DIR/*_trimmed_R1.fastq_numbered_R1.fastq; do
+  read2=$(echo $read1| sed 's/1.fq.gz_trimmed_R1.fastq_numbered_R1.fastq/2.fq.gz_trimmed_R2.fastq_numbered_R2.fastq/')
+  a=$(basename -- $read1)
+  b=$(basename -- $read2)
+  out=$HISAT2_DIR
+  hisat2 --known-splicesite-infile $SPLICE_SITES --no-softclip --threads $NUM_THREADS --time --reorder -x $HISAT2_GENOME_DIR$GENOME_NAME -1 $read1 -2 $read2 -S $out${a}".sam" --min-intronlen 20 --max-intronlen 10000 --rna-strandness RF --novel-splicesite-outfile $HISAT2_DIR"_HISAT2_splice_junctions.txt" --summary-file $HISAT2_DIR"_HISAT2_summary.txt" --new-summary
+done
 ## MAP READS WITH STAR USING DEFAULT SETTINGS
 ## STAR version 2.7.0d
 #STAR_DIR=$ALIGNMENTS_DIR"STAR_default/"
