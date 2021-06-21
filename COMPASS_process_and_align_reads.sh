@@ -180,12 +180,12 @@ BBMAP_DIR=$ALIGNMENTS_DIR"bbmap/"
 mkdir $BBMAP_DIR
 out=$BBMAP_DIR
 
-for read1 in $NUMBERED_READS_DIR*_trimmed_R1.fastq_numbered_R1.fastq; do
-  read2=$(echo $read1| sed 's/1.fq.gz_trimmed_R1.fastq_numbered_R1.fastq/2.fq.gz_trimmed_R2.fastq_numbered_R2.fastq/')
+for read1 in $NUMBERED_READS_DIR*_numbered_R1.fastq; do
+  read2=$(echo $read1| sed 's/1_trimmed_R1.fastq_numbered_R1.fastq/2_trimmed_R2.fastq_numbered_R2.fastq/')
   a=$(basename -- $read1)
   b=$(basename -- $read2)
   out=$BBMAP_DIR
-  /u/project/guillom/kevinh97/bbmap/bbmap.sh -Xmx16g in1=$read1 in2=$read2 ref=$FASTA out=$out${a}".sam" nhtag=t mdtag=t nhtag=t xmtag=t  amtag=t nmtag=t tipsearch=2000 pairlen=10000
+  /u/project/guillom/kevinh97/bbmap/bbmap.sh -Xmx16g in1=${read1} in2=${read2} ref=$FASTA out=$out${a}".sam" nhtag=t mdtag=t nhtag=t xmtag=t  amtag=t nmtag=t tipsearch=2000 pairlen=10000
 done
 
 for read1 in $NUMBERED_READS_DIR/*_trimmed_R1.fastq_numbered_R1.fastq; do
