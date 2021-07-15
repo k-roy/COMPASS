@@ -64,16 +64,17 @@ random.seed(1234)
 # reads_to_process = int(argv[8])
 # regions_to_mask = int(argv[9]) ## block rRNA region from processing as the computation appears to stall there often
 
-COMPASS_DIR = '/Volumes/SPxDrive/COMPASS/' # '/mnt/mindrinos/kevinroy/projects/COMPASS/' # 
+COMPASS_DIR = '/u/project/guillom/kevinh97/COMPASS/' # '/mnt/mindrinos/kevinroy/projects/COMPASS/' #
 GENOME_DIR = COMPASS_DIR + 'S288C_reference_genome_R64-2-1_20150113/'
 PROCESSED_DIR = COMPASS_DIR + 'processed_data/'
 ALIGNMENTS_DIR = PROCESSED_DIR + 'alignments/'
 OUT_DIR = ALIGNMENTS_DIR + 'COMPASS_integration_full_output/'# 'COMPASS_integration_from_USJ/'
+mkdir $OUT_DIR
 # os.mkdir(OUT_DIR)
-FASTA = GENOME_DIR + 'S288C_reference_sequence_R64-2-1_20150113_reformatted_chromosome_names.fasta'
-INTRONS_FILE = GENOME_DIR + 'S_cerevisiae_all_introns.tsv'
-ALIGNERS_FILE = COMPASS_DIR + 'sample_aligner_info.tsv'
-sample_name = 'SRR5582778_subsampled' # 'SRR5582776'
+FASTA ='/u/project/guillom/kevinh97/COMPASS/S288C_reference_genome_R64-2-1_20150113/Saccharomyces_cerevisiae.R64-1-1.dna.toplevel.fa'
+INTRONS_FILE = '/u/project/guillom/kevinh97/COMPASS/S288C_reference_genome_R64-2-1_20150113/saccharomyces_cerevisiae_R64-2-1_20150113_introns_no_chr.tsv'
+ALIGNERS_FILE = '/u/project/guillom/kevinh97/sample_aligner_info.tsv'
+sample_name = 'RRP6_1SC_subsampled' # 'SRR5582776'
 sample_suffix = '_COMPASS_name_sorted.bam' # '_COMPASS_USJ.bam'
 reads_to_process = 10**7
 
