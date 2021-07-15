@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 """
+updated on Friday, July 2, 2021
 @author: kevinroy
 
 command line usage: python compare_splice_junctions_from_multiple_aligner_BAM.py GENOME_FASTA GFF_ANNOTATIONS ALIGNMENTS_ALIGNERS JUNCTION_STATISTICS_OUTFILENAME INTEGRATED_ALIGNMENT_SUMMARY_OUTFILENAME INTEGRATED_ALIGNMENT_SAM_OUTFILENAME  FILTERED_SAM_DIR SAMPLE_PREFIX
