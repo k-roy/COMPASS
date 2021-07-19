@@ -11,15 +11,15 @@ import pysam
 import pyranges as pr
 import matplotlib as plt
 
-COMPASS_DIR = '/Volumes/SPxDrive/COMPASS/' # '/mnt/mindrinos/kevinroy/projects/COMPASS/' # 
+COMPASS_DIR = '/u/project/guillom/kevinh97/COMPASS/' # '/mnt/mindrinos/kevinroy/projects/COMPASS/' #
 GENOME_DIR = COMPASS_DIR + 'S288C_reference_genome_R64-2-1_20150113/'
 
 OUT_DIR = COMPASS_DIR + 'processed_data/'
 ALIGNMENTS_DIR = OUT_DIR + 'alignments/'
-COMPASS_JUNCTION_DIR = ALIGNMENTS_DIR + 'COMPASS_integration/'
-FASTA = GENOME_DIR + 'S288C_reference_sequence_R64-2-1_20150113_reformatted_chromosome_names.fasta'
-INTRONS_FILE = GENOME_DIR + 'S_cerevisiae_all_introns.tsv'
-ALIGNERS_FILE = COMPASS_DIR + 'sample_aligner_info.tsv'
+COMPASS_JUNCTION_DIR = ALIGNMENTS_DIR + 'COMPASS_integration_full_output/'
+FASTA = GENOME_DIR + 'Saccharomyces_cerevisiae.R64-1-1.dna.toplevel.fa'
+INTRONS_FILE = '/u/project/guillom/kevinh97/COMPASS/S288C_reference_genome_R64-2-1_20150113/saccharomyces_cerevisiae_R64-2-1_20150113_introns_no_chr.tsv'
+ALIGNERS_FILE = '/u/project/guillom/kevinh97/sample_aligner_info.tsv'
 sample_suffix = '_COMPASS_splice_junctions.tsv'
 
 try:
@@ -239,7 +239,7 @@ def get_sequence_flanking_SS(chromosome, start, end, strand, max_US_perfect_matc
 # sample_names = 'SRR9130287 SRR9130288 SRR9130289 SRR9130290 SRR9130291 SRR9130292'.split(' ') # Roy et al.
 # sample_names = 'SRR5041706 SRR5041707 SRR5041708 SRR5041709'.split(' ')  # Talkish et al.
 # sample_names = 'SRR5582776 SRR5582777 SRR5582778 SRR5582779 SRR5582780 SRR5582781'.split(' ')  # Aslanzadeh et al.
-sample_names = 'SRR7208762 SRR7208766 SRR7208767 SRR7208768 SRR7208769 SRR7208771 SRR7208772 SRR7208773 SRR7208774 SRR7208775 SRR7208776 SRR7208777'.split(' ') # 'SRR5582778', 'SRR5582779', 'SRR5582780', 'SRR5582781'
+sample_names = 'RRP6_1SC__'.split(' ') # 'SRR5582778', 'SRR5582779', 'SRR5582780', 'SRR5582781'
 for sample_name in sample_names:
     print(sample_name)
     junction_filename = COMPASS_JUNCTION_DIR + sample_name + sample_suffix
