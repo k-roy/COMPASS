@@ -107,6 +107,11 @@ trimmed_R2=$TRIMMED_DIR"_trimmed_R2.fastq"
 numbered_R1=$NUMBERED_READS_DIR"_numbered_R1.fastq"
 numbered_R2=$NUMBERED_READS_DIR"_numbered_R2.fastq"
 
+list_data_folders=$(find /u/project/guillom/kevinh97/usftp21.novogene.com/raw_data/ -type f)
+list_data_files=$(find $list_data_folders -name "*.gz")
+
+#echo $list_data_files
+
 for read1 in $list_data_files/*_1.fq.gz; do
   read2=$(echo $read1| sed 's/_1.fq.gz/_2.fq.gz/')
   f=$(basename -- $read1)
