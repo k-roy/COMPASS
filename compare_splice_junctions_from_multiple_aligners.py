@@ -70,8 +70,8 @@ import timeit
 import random 
 import COMPASS_functions_human
 import importlib
-importlib.reload(COMPASS_functions_human)
-from COMPASS_functions_human import *
+importlib.reload(COMPASS_functions)
+from COMPASS_functions import *
 
 start_time = timeit.default_timer()
 random.seed(1234)
