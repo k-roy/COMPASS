@@ -106,9 +106,6 @@ sample_suffix = '_name_sorted.bam'
 WRITE_ALL_COMPASS_BAM = True
 WRITE_UNANNOTATED_JUNCTIONS_BAM = True
 
-MAX_EDIT_DIST_TO_CONSIDER = 8 
-# This is the max bp involved in mismatches and indels in both reads (not including introns) to consider for COMPASS.
-# Short reads with this many mismatches are unlikely to give a confident junction.
 MISMATCH_DIST_FROM_JUNCTION_DISALLOWED = 10 
 # Mismatches near the junction have a chance of impacting alignment accuracy.
 # A single mismatch within 10 bp of a junction raises a flag. These are reported and can be filtered later.
@@ -392,78 +389,77 @@ while read_num <= reads_to_process and not eof:
         alignment_scores.append(R1['alignment_score'] + R2['alignment_score'])
         num_intron_found_lst.append(len(set(R1['splice_sites'] + R2['splice_sites'])))
     best_score = min(alignment_scores)
-    if best_score < MAX_EDIT_DIST_TO_CONSIDER:
-        min_score_has_annotated_intron = False
-        min_score_has_no_intron = False
+    min_score_has_annotated_intron = False
+    min_score_has_no_intron = False
 
-        # initialize lists for info on each alignment, access later by idx using this construct: for idx in range(len(aligners))
-        perfect_gapped_alignment_lst = []
-        read1_alignments = []
-        read2_alignments = []
-        splice_junction_lst = []
-        intron_lengths_lst = [] # for each read, take the maximum intron length
-        comment_tag_lst = []
-        alignment_type_lst = []
-        num_annotated_introns_lst = []
-        idx_without_mismatch_near_junction = []
-        idx_with_best_score = []
-        idx_best_score_with_no_intron = []
-        idx_best_score_with_annotated_intron = []
-        # need to loop through the aligners first to pre-compute:  
-        # min_score_has_annotated_intron, min_score_has_no_intron, perfect_gapped_alignment_lst
-        for idx in range(len(aligners)):
-            aligner = aligners[idx]
-            R1 = R1_lst[idx]
-            R2 = R2_lst[idx]
-            splice_junctions_in_read_pair = []
-            intron_lengths = [0]
-            annotated_introns_found = 0
-            for e in R1, R2:
-                if e['adjusted_introns'] != []:
-                # values in adjusted_introns list: chrom, adj_start, adj_stop, five_SS, three_SS, \
-                # RNA_strand, num_amb_junctions, annotated_junction, ann_5SS, ann_3SS, canonical_5SS, \
-                # canonical_3SS, intron_size, intron_coords_adjusted, mismatch_near_junction, \
-                # US_perfect_matches, DS_perfect_matches, five_SS_Q_score, three_SS_Q_score
+    # initialize lists for info on each alignment, access later by idx using this construct: for idx in range(len(aligners))
+    perfect_gapped_alignment_lst = []
+    read1_alignments = []
+    read2_alignments = []
+    splice_junction_lst = []
+    intron_lengths_lst = [] # for each read, take the maximum intron length
+    comment_tag_lst = []
+    alignment_type_lst = []
+    num_annotated_introns_lst = []
+    idx_without_mismatch_near_junction = []
+    idx_with_best_score = []
+    idx_best_score_with_no_intron = []
+    idx_best_score_with_annotated_intron = []
+    # need to loop through the aligners first to pre-compute:  
+    # min_score_has_annotated_intron, min_score_has_no_intron, perfect_gapped_alignment_lst
+    for idx in range(len(aligners)):
+        aligner = aligners[idx]
+        R1 = R1_lst[idx]
+        R2 = R2_lst[idx]
+        splice_junctions_in_read_pair = []
+        intron_lengths = [0]
+        annotated_introns_found = 0
+        for e in R1, R2:
+            if e['adjusted_introns'] != []:
+            # values in adjusted_introns list: chrom, adj_start, adj_stop, five_SS, three_SS, \
+            # RNA_strand, num_amb_junctions, annotated_junction, ann_5SS, ann_3SS, canonical_5SS, \
+            # canonical_3SS, intron_size, intron_coords_adjusted, mismatch_near_junction, \
+            # US_perfect_matches, DS_perfect_matches, five_SS_Q_score, three_SS_Q_score
 
-                # chrom, adj_start, adj_stop, five_SS, three_SS, RNA_strand, num_amb_junctions, \
-                # annotated_junction, ann_5SS, ann_3SS, canonical_5SS, canonical_3SS = adjusted_intron  
+            # chrom, adj_start, adj_stop, five_SS, three_SS, RNA_strand, num_amb_junctions, \
+            # annotated_junction, ann_5SS, ann_3SS, canonical_5SS, canonical_3SS = adjusted_intron  
 
-                # read 1 and read 2 info entered on separate lines if both contain a gapped alignment, 
-                # later on these can be further processed and integrated by groupby operations
+            # read 1 and read 2 info entered on separate lines if both contain a gapped alignment, 
+            # later on these can be further processed and integrated by groupby operations
 
-                # if a read contains more than one intron (quite rare), it is entered on multiple lines
-                    for intron in e['adjusted_introns']:
-                        splice_junctions_in_read_pair.append(tuple([intron[e] for e in  'chrom, adj_start, adj_stop, five_SS, three_SS, RNA_strand'.split(', ')] ))
-                        if intron['annotated_junction']:
-                            annotated_introns_found += 1
-                        if not intron['mismatch_near_junction']:
-                            idx_without_mismatch_near_junction.append(idx)  
-                        intron_lengths.append(intron['intron_size'])
-            intron_lengths_lst.append(max(intron_lengths))  
-            splice_junction_lst.append(tuple(splice_junctions_in_read_pair))
-            num_annotated_introns_lst.append(annotated_introns_found)
-            if alignment_scores[idx] == best_score:
-                idx_with_best_score.append(idx)
-                if annotated_introns_found > 0:
-                    min_score_has_annotated_intron = True
-                    idx_best_score_with_annotated_intron.append(idx)
-                if splice_junctions_in_read_pair == []:
-                    min_score_has_no_intron = True
-                    idx_best_score_with_no_intron.append(idx)
-            # if introns are present, is there a perfect gapped alignment present in the read pair?
-            perfect_gapped_alignment_lst.append(R1['perfect_gapped_alignment'] or R2['perfect_gapped_alignment'])  
+            # if a read contains more than one intron (quite rare), it is entered on multiple lines
+                for intron in e['adjusted_introns']:
+                    splice_junctions_in_read_pair.append(tuple([intron[e] for e in  'chrom, adj_start, adj_stop, five_SS, three_SS, RNA_strand'.split(', ')] ))
+                    if intron['annotated_junction']:
+                        annotated_introns_found += 1
+                    if not intron['mismatch_near_junction']:
+                        idx_without_mismatch_near_junction.append(idx)  
+                    intron_lengths.append(intron['intron_size'])
+        intron_lengths_lst.append(max(intron_lengths))  
+        splice_junction_lst.append(tuple(splice_junctions_in_read_pair))
+        num_annotated_introns_lst.append(annotated_introns_found)
+        if alignment_scores[idx] == best_score:
+            idx_with_best_score.append(idx)
+            if annotated_introns_found > 0:
+                min_score_has_annotated_intron = True
+                idx_best_score_with_annotated_intron.append(idx)
+            if splice_junctions_in_read_pair == []:
+                min_score_has_no_intron = True
+                idx_best_score_with_no_intron.append(idx)
+        # if introns are present, is there a perfect gapped alignment present in the read pair?
+        perfect_gapped_alignment_lst.append(R1['perfect_gapped_alignment'] or R2['perfect_gapped_alignment'])  
 
-            if num_intron_found_lst[idx] == 0:
-                alignment_type = 'UGA'  
+        if num_intron_found_lst[idx] == 0:
+            alignment_type = 'UGA'  
+        else:
+            if num_annotated_introns_lst[idx] > 0:
+                alignment_type = 'ASJ'
             else:
-                if num_annotated_introns_lst[idx] > 0:
-                    alignment_type = 'ASJ'
-                else:
-                    alignment_type = 'USJ'
-            alignment_type_lst.append(alignment_type)
-            
-            comment_tag = [aligner, R1['chrom'], R1['coord'], R1['cigar'], R2['chrom'], R2['coord'], R2['cigar'], alignment_scores[idx], alignment_type_lst[idx]]
-            comment_tag_lst.append(','.join([str(e) for e in comment_tag]) )
+                alignment_type = 'USJ'
+        alignment_type_lst.append(alignment_type)
+
+        comment_tag = [aligner, R1['chrom'], R1['coord'], R1['cigar'], R2['chrom'], R2['coord'], R2['cigar'], alignment_scores[idx], alignment_type_lst[idx]]
+        comment_tag_lst.append(','.join([str(e) for e in comment_tag]) )
 
         # write the complete comparison table for all read alignments (big table = num reads X num aligners) 
         for idx in range(len(aligners)):            
