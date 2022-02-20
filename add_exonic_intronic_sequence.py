@@ -168,13 +168,13 @@ def get_sequence_flanking_SS_and_likely_BP(chrom, start, end, strand, \
         downstream_3SS = genome_fasta.fetch(chrom, end + 1, end + max_DS_perfect_matches + 1)
         seqs = [upstream_5SS, fiveSS_seq,  downstream_5SS, upstream_3SS, threeSS_seq, downstream_3SS ]
 
-        US_3SS_motif_10nt = genome_fasta.fetch(chrom, end - 12, end - 2)
+        US_3SS_motif_10nt = genome_fasta.fetch(chrom, end - 12, end - 2).upper()
         
-        US_5SS_10nt = genome_fasta.fetch(chrom, max(start - 10, 1), start)
-        DS_5SS_10nt = genome_fasta.fetch(chrom, start, start + 10)
+        US_5SS_10nt = genome_fasta.fetch(chrom, max(start - 10, 1), start).upper()
+        DS_5SS_10nt = genome_fasta.fetch(chrom, start, start + 10).upper()
         
-        US_3SS_10nt = genome_fasta.fetch(chrom, end - 9, end + 1)
-        DS_3SS_10nt = genome_fasta.fetch(chrom, end + 1, min(end + 11, genome_fasta.get_reference_length(chrom)) )
+        US_3SS_10nt = genome_fasta.fetch(chrom, end - 9, end + 1).upper()
+        DS_3SS_10nt = genome_fasta.fetch(chrom, end + 1, min(end + 11, genome_fasta.get_reference_length(chrom)) ).upper()
         
     if strand == '-':
         downstream_3SS = genome_fasta.fetch(chrom, start - max_DS_perfect_matches, start)
@@ -186,13 +186,13 @@ def get_sequence_flanking_SS_and_likely_BP(chrom, start, end, strand, \
         upstream_5SS = genome_fasta.fetch(chrom, end + 1, end + 1 + max_US_perfect_matches)
         seqs = [ rc(e) for e in (upstream_5SS, fiveSS_seq,  downstream_5SS, upstream_3SS, threeSS_seq, downstream_3SS  ) ]
         
-        US_3SS_motif_10nt = rc( genome_fasta.fetch(chrom, start + 3, start + 13) )
+        US_3SS_motif_10nt = rc( genome_fasta.fetch(chrom, start + 3, start + 13) ).upper()
         
-        US_5SS_10nt = rc(genome_fasta.fetch(chrom, end + 1, min(end + 11, genome_fasta.get_reference_length(chrom))) )
-        DS_5SS_10nt = rc(genome_fasta.fetch(chrom, end - 9, end + 1) )
+        US_5SS_10nt = rc(genome_fasta.fetch(chrom, end + 1, min(end + 11, genome_fasta.get_reference_length(chrom))) ).upper()
+        DS_5SS_10nt = rc(genome_fasta.fetch(chrom, end - 9, end + 1) ).upper()
         
-        US_3SS_10nt = rc(genome_fasta.fetch(chrom, start, start + 10) )
-        DS_3SS_10nt = rc(genome_fasta.fetch(chrom, max(start - 10, 1), start) )
+        US_3SS_10nt = rc(genome_fasta.fetch(chrom, start, start + 10) ).upper()
+        DS_3SS_10nt = rc(genome_fasta.fetch(chrom, max(start - 10, 1), start) ).upper()
     seqs = [e.upper() for e in seqs]            
     upstream_5SS, fiveSS_seq, downstream_5SS, upstream_3SS, threeSS_seq, downstream_3SS  =  seqs
     poly_U_count = US_3SS_motif_10nt.count('T')
