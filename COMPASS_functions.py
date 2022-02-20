@@ -11,15 +11,15 @@ def get_ambiguous_junctions(chrom, start, stop, genome_fasta):
     '''
     junctions = []
     idx = 1
-    while start-idx > 0 and genome_fasta.fetch(chrom, start-idx, start-idx+1) \
-        == genome_fasta.fetch(chrom, stop-idx+1, stop-idx+2):
+    while start-idx > 0 and genome_fasta.fetch(chrom, start-idx, start-idx+1).upper() \
+        == genome_fasta.fetch(chrom, stop-idx+1, stop-idx+2).upper():
         ambiguous_intron = (chrom, start-idx, stop-idx)
         junctions.append(ambiguous_intron)
         idx += 1
     idx = 0
     while stop-idx+1 < genome_fasta.get_reference_length(chrom) and \
-        genome_fasta.fetch(chrom, start-idx, start-idx+1) == \
-            genome_fasta.fetch(chrom, stop-idx+1, stop-idx+2):
+        genome_fasta.fetch(chrom, start-idx, start-idx+1).upper() == \
+            genome_fasta.fetch(chrom, stop-idx+1, stop-idx+2).upper():
         ambiguous_intron = (chrom, start-idx+1, stop-idx+1)
         junctions.append(ambiguous_intron)
         idx -= 1
@@ -118,8 +118,8 @@ def adjust_ambiguous_junctions(chrom, start, stop, RNA_strand, genome_fasta, \
     idx = 1
     # don't consider junctions with 10 identical nt upstream or downstream 
     # as these are almost certainly artifactual gapped alignments
-    while idx < 10 and start-idx > 0 and genome_fasta.fetch(chrom, start-idx, start-idx+1) \
-        == genome_fasta.fetch(chrom, stop-idx+1, stop-idx+2):
+    while idx < 10 and start-idx > 0 and genome_fasta.fetch(chrom, start-idx, start-idx+1).upper() \
+        == genome_fasta.fetch(chrom, stop-idx+1, stop-idx+2).upper():
         #print(chrom, start, stop, idx, genome_fasta.fetch(chrom, start-idx, start-idx+1), 
         # genome_fasta.fetch(chrom, stop-idx+1, stop-idx+2))
         ambiguous_intron = (chrom, start-idx, stop-idx)
@@ -127,8 +127,8 @@ def adjust_ambiguous_junctions(chrom, start, stop, RNA_strand, genome_fasta, \
         idx += 1
     idx = 0
     while idx > -10 and stop-idx+1 < genome_fasta.get_reference_length(chrom) and \
-        genome_fasta.fetch(chrom, start-idx, start-idx+1) == \
-            genome_fasta.fetch(chrom, stop-idx+1, stop-idx+2):
+        genome_fasta.fetch(chrom, start-idx, start-idx+1).upper() == \
+            genome_fasta.fetch(chrom, stop-idx+1, stop-idx+2).upper():
         #print(chrom, start, stop, idx, genome_fasta.fetch(chrom, start-idx, start-idx+1), 
         # genome_fasta.fetch(chrom, stop-idx+1, stop-idx+2))
         ambiguous_intron = (chrom, start-idx+1, stop-idx+1)
@@ -144,11 +144,11 @@ def adjust_ambiguous_junctions(chrom, start, stop, RNA_strand, genome_fasta, \
     for junction in junctions:
         chrom, amb_start, amb_stop = junction
         if RNA_strand == '+':
-            fiveSS = genome_fasta.fetch(chrom, amb_start, amb_start+6)
-            threeSS = genome_fasta.fetch(chrom, amb_stop-2, amb_stop+1)
+            fiveSS = genome_fasta.fetch(chrom, amb_start, amb_start+6).upper()
+            threeSS = genome_fasta.fetch(chrom, amb_stop-2, amb_stop+1).upper()
         if RNA_strand == '-':
-            fiveSS = rc(genome_fasta.fetch(chrom, amb_stop-5, amb_stop+1))
-            threeSS = rc(genome_fasta.fetch(chrom, amb_start, amb_start+3))
+            fiveSS = rc(genome_fasta.fetch(chrom, amb_stop-5, amb_stop+1)).upper()
+            threeSS = rc(genome_fasta.fetch(chrom, amb_start, amb_start+3)).upper()
         potential_5SS.append(fiveSS)
         potential_3SS.append(threeSS)
         five_SS_score = get_five_SS_score(fiveSS, consensus_5SS, penalties_5SS)
