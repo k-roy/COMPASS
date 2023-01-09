@@ -11,23 +11,23 @@ Installs samfixcigar from jvarkit.
 2) COMPASS.sh (run for each sample):
 This is the core program. COMPASS.sh calls the following scripts.
 
-a) process_reads_and_align.sh
+  a) process_reads_and_align.sh
   Read 3′ trimming for polyA tails and base calling quality scores (cutadapt)
   Assigns consecutive numbers to each read in the fastq file (awk).
   Alignment with multiple aligners: BBMap, STAR (both default and noncanonical splicing modes), HISAT2 (both default and noncanonical splicing modes), Magic-BLAST, and GSNAP.
   Prior to or as part of the alignment program calls, genome indices are built for each aligner only if necessary (i.e. when running the first time).
 Sam files are converted to .bam format (samtools view), sorted by mapped reference coordinates (samtools sort), cigars reformatted to SAM format 1.4 (samfixcigar), and then sorted by read numbers (samtools sort).
 
-b) compare_splice_junctions_from_multiple_aligners.py
-Comparison of Multiple Programs for Accurate Splice Site discovery (COMPASS) core program
-Adjustment of ambiguous junctions to most likely splice sites based on species-specific splice signals
+  b) compare_splice_junctions_from_multiple_aligners.py
+  Comparison of Multiple Programs for Accurate Splice Site discovery (COMPASS) core program
+  Adjustment of ambiguous junctions to most likely splice sites based on species-specific splice signals
 
-c) add_exonic_intronic_sequence.py
-Adjustment of ambiguous junctions to most likely splice sites based on species-specific splice signals
+  c) add_exonic_intronic_sequence.py
+  Adjustment of ambiguous junctions to most likely splice sites based on species-specific splice signals
 
-d) create_splice_site_bed.py
+  d) create_splice_site_bed.py
 
-e) add_unspliced_read_counts_to_junctions.py
+  e) add_unspliced_read_counts_to_junctions.py
 
 3) COMPASS_combine_junction_tables_from_multiple_samples.py
 This script performs alternative splice junction calling and junction quality filtering.
