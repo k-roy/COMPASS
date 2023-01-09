@@ -37,10 +37,11 @@ def get_ambiguous_junctions_in_annotated_introns(introns_file, genome_fasta):
     takes a file of introns in gff format with 1-based coords
     returns annotated_intron_df, ambiguous_junction_to_annotated_junction, ambiguous_annotated_junctions, annotated_introns, junction_to_intron_type
     '''
-    annotated_intron_df = pd.read_csv(introns_file, sep = '\t', names=['chrom','start', 'stop', 'strand'])
-    # adjust 1-based introns to 0-based python coords
+    annotated_intron_df = pd.read_csv(introns_file, sep = '\t', names=['chrom','start', 'stop', 'strand', 'intron_type'])
+    # adjust 1-based introns to 0-based python coords if necessary.
+    # Confirm that annotated introns are adjusted correctly before proceeding.
+    # HISAT2 splice sites files have the start coord 0-based.
     annotated_intron_df['adjusted_start'] = annotated_intron_df['start'] + 1 # - 1
-    # The HISAT2 splice sites file already has the start coord 0-based
     annotated_intron_df['adjusted_stop'] = annotated_intron_df['stop'] - 1
     ambiguous_junction_to_annotated_junction = {}
     ambiguous_annotated_junctions = set([])
@@ -50,16 +51,17 @@ def get_ambiguous_junctions_in_annotated_introns(introns_file, genome_fasta):
         chrom = row['chrom']
         start = row['adjusted_start']
         stop = row['adjusted_stop']
+        intron_type = row['intron_type']
         annotated_intron = (chrom, start, stop)
         ambiguous_junctions = get_ambiguous_junctions(chrom, start, stop, genome_fasta)
-        junction_to_intron_type[annotated_intron] = 'intron'
+        junction_to_intron_type[annotated_intron] = intron_type
         annotated_introns.add(annotated_intron)
         if ambiguous_junctions != [annotated_intron]:
             ambiguous_annotated_junctions.add(annotated_intron)
             for ambiguous_junction in ambiguous_junctions:
                 ambiguous_junction_to_annotated_junction[ambiguous_junction] \
                     = annotated_intron
-                junction_to_intron_type[ambiguous_junction] = 'intron'
+                junction_to_intron_type[ambiguous_junction] = intron_type
     print('number of annotated introns:', len(annotated_intron_df.index))
     print('number of annotated introns with identical nt upstream or downstream of junctions:', len(ambiguous_annotated_junctions))
     print('total number of intron coords mapping to annotated junctions:', len(ambiguous_junction_to_annotated_junction))
