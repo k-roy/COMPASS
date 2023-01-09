@@ -1,3 +1,4 @@
+from curses.ascii import NAK
 import operator
 import pysam
 import pandas as pd
@@ -11,18 +12,24 @@ def get_ambiguous_junctions(chrom, start, stop, genome_fasta):
     '''
     junctions = []
     idx = 1
-    while start-idx > 0 and genome_fasta.fetch(chrom, start-idx, start-idx+1).upper() \
-        == genome_fasta.fetch(chrom, stop-idx+1, stop-idx+2).upper():
+    while start-idx > 0 and genome_fasta.fetch(chrom, start-idx, start-idx+1) \
+        == genome_fasta.fetch(chrom, stop-idx+1, stop-idx+2):
         ambiguous_intron = (chrom, start-idx, stop-idx)
         junctions.append(ambiguous_intron)
         idx += 1
     idx = 0
+    ambiguous_intron = (chrom, start-idx, stop-idx)
+    junctions.append(ambiguous_intron)
     while stop-idx+1 < genome_fasta.get_reference_length(chrom) and \
-        genome_fasta.fetch(chrom, start-idx, start-idx+1).upper() == \
-            genome_fasta.fetch(chrom, stop-idx+1, stop-idx+2).upper():
+        genome_fasta.fetch(chrom, start-idx, start-idx+1) == \
+            genome_fasta.fetch(chrom, stop-idx+1, stop-idx+2):
         ambiguous_intron = (chrom, start-idx+1, stop-idx+1)
         junctions.append(ambiguous_intron)
         idx -= 1
+    junctions = sorted(junctions) 
+    # Sorting the junctions is critical to ensure that different ambiguous junction inputs 
+    # yield identical adjusted junctions, 
+    # e.g. in cases where there are two potential amb junctions with identical scores.
     return junctions
 
 def get_ambiguous_junctions_in_annotated_introns(introns_file, genome_fasta):
@@ -47,7 +54,7 @@ def get_ambiguous_junctions_in_annotated_introns(introns_file, genome_fasta):
         ambiguous_junctions = get_ambiguous_junctions(chrom, start, stop, genome_fasta)
         junction_to_intron_type[annotated_intron] = 'intron'
         annotated_introns.add(annotated_intron)
-        if ambiguous_junctions != []:
+        if ambiguous_junctions != [annotated_intron]:
             ambiguous_annotated_junctions.add(annotated_intron)
             for ambiguous_junction in ambiguous_junctions:
                 ambiguous_junction_to_annotated_junction[ambiguous_junction] \
@@ -92,7 +99,7 @@ def get_three_SS_score(query, consensus_3SS, penalties_3SS):
     return sum(penalties_3SS[i] for i in range(len(query)) if query[i] not in consensus_3SS[i])
 
 def rc(seq):
-    return seq.translate(str.maketrans("ACTG", "TGAC"))[::-1]
+    return seq.translate(str.maketrans('ACGTacgtRYMKrymkVBHDvbhdNn ', 'TGCAtgcaYRKMyrkmBVDHbvdhNn '))[::-1]
 
 def count_frequency(lst, num_items_to_report):
     counts = {}
@@ -104,77 +111,73 @@ def adjust_ambiguous_junctions(chrom, start, stop, RNA_strand, genome_fasta, \
     annotated_intron_df, annotated_introns, consensus_5SS, penalties_5SS, \
         consensus_3SS, penalties_3SS):
     '''
-    This function takes intron coordinates and
+    Takes intron coordinates and
     checks for ambiguous junction based on nt upstream and downstream of 
     exon-intron and intron-exon junctions.
     if ambiguous, adjusts based on closest match to 5SS and 3SS consensus. 
     The 3SS motif adds a smaller scoring component as it is less conserved in 
     S. cerevisiae.  This can be changed for other organisms.
     # max penalty score for 5SS = 10, max penalty score for 3SS = 6
-    returns adjusted coordinates and other info on the intron: 
+
+    Returns adjusted coordinates and other info on the intron: 
     five_SS, three_SS, RNA_strand, num_amb_junctions, annotated_junction, ann_5SS, ann_3SS, canonical_5SS, canonical_3SS, intron_size, intron_coords_adjusted
     '''
-    junctions = [(chrom, start, stop)]
-    idx = 1
-    # don't consider junctions with 10 identical nt upstream or downstream 
-    # as these are almost certainly artifactual gapped alignments
-    while idx < 10 and start-idx > 0 and genome_fasta.fetch(chrom, start-idx, start-idx+1).upper() \
-        == genome_fasta.fetch(chrom, stop-idx+1, stop-idx+2).upper():
-        #print(chrom, start, stop, idx, genome_fasta.fetch(chrom, start-idx, start-idx+1), 
-        # genome_fasta.fetch(chrom, stop-idx+1, stop-idx+2))
-        ambiguous_intron = (chrom, start-idx, stop-idx)
-        junctions.append(ambiguous_intron)
-        idx += 1
-    idx = 0
-    while idx > -10 and stop-idx+1 < genome_fasta.get_reference_length(chrom) and \
-        genome_fasta.fetch(chrom, start-idx, start-idx+1).upper() == \
-            genome_fasta.fetch(chrom, stop-idx+1, stop-idx+2).upper():
-        #print(chrom, start, stop, idx, genome_fasta.fetch(chrom, start-idx, start-idx+1), 
-        # genome_fasta.fetch(chrom, stop-idx+1, stop-idx+2))
-        ambiguous_intron = (chrom, start-idx+1, stop-idx+1)
-        junctions.append(ambiguous_intron)
-        idx -= 1
+    junctions = get_ambiguous_junctions(chrom, start, stop, genome_fasta)
     potential_5SS = []
     potential_3SS = []
     SS_scores = []
-    junctions = sorted(junctions) 
-    # This is critical to ensure that different ambiguous junction inputs 
-    # yield identical adjusted junctions, 
-    # e.g. in cases where there are two potential amb junctions with identical scores.
+
+    # Splice site motifs will only be favored if no splice site in the ambiguouos stretch matches an annotated site.
     for junction in junctions:
         chrom, amb_start, amb_stop = junction
         if RNA_strand == '+':
-            fiveSS = genome_fasta.fetch(chrom, amb_start, amb_start+6).upper()
-            threeSS = genome_fasta.fetch(chrom, amb_stop-2, amb_stop+1).upper()
+            fiveSS = genome_fasta.fetch(chrom, amb_start, amb_start+6)
+            threeSS = genome_fasta.fetch(chrom, amb_stop-2, amb_stop+1)
         if RNA_strand == '-':
-            fiveSS = rc(genome_fasta.fetch(chrom, amb_stop-5, amb_stop+1)).upper()
-            threeSS = rc(genome_fasta.fetch(chrom, amb_start, amb_start+3)).upper()
+            fiveSS = rc(genome_fasta.fetch(chrom, amb_stop-5, amb_stop+1))
+            threeSS = rc(genome_fasta.fetch(chrom, amb_start, amb_start+3))
         potential_5SS.append(fiveSS)
         potential_3SS.append(threeSS)
         five_SS_score = get_five_SS_score(fiveSS, consensus_5SS, penalties_5SS)
         three_SS_score = get_three_SS_score(threeSS, consensus_3SS, penalties_3SS)
         SS_scores.append(five_SS_score + three_SS_score)
     most_likely_intron = junctions[SS_scores.index(min(SS_scores))] 
-    chrom, adj_start, adj_stop = most_likely_intron
-    intron_coords_adjusted = (adj_start == start)
-    if RNA_strand == '+':
-        ann_5SS = ((annotated_intron_df['strand'] == RNA_strand) & (annotated_intron_df['adjusted_start'] == adj_start)).any()
-        ann_3SS = ((annotated_intron_df['strand'] == RNA_strand) & (annotated_intron_df['adjusted_stop'] == adj_stop)).any()
-    else:
-        ann_3SS = ((annotated_intron_df['strand'] == RNA_strand) & (annotated_intron_df['adjusted_start'] == adj_start)).any()
-        ann_5SS = ((annotated_intron_df['strand'] == RNA_strand) & (annotated_intron_df['adjusted_stop'] == adj_stop)).any()
     five_SS = potential_5SS[SS_scores.index(min(SS_scores))]
     three_SS = potential_3SS[SS_scores.index(min(SS_scores))]
+
+    annotated_intron_found = False
+    for idx in range(len(junctions)):
+        junction = junctions[idx]
+        chrom, start, stop = junction
+        if RNA_strand == '+':
+            ann_5SS = ((annotated_intron_df['strand'] == RNA_strand) & (annotated_intron_df['adjusted_start'] == start)).any()
+            ann_3SS = ((annotated_intron_df['strand'] == RNA_strand) & (annotated_intron_df['adjusted_stop'] == stop)).any()
+        else:
+            ann_3SS = ((annotated_intron_df['strand'] == RNA_strand) & (annotated_intron_df['adjusted_start'] == start)).any()
+            ann_5SS = ((annotated_intron_df['strand'] == RNA_strand) & (annotated_intron_df['adjusted_stop'] == stop)).any()
+        if ann_5SS or ann_3SS:
+            # Annotated splice sites will override favoring splice motifs for junction adjustment.
+            most_likely_intron = junction
+            five_SS = potential_5SS[idx]
+            three_SS = potential_3SS[idx]
+        if ann_5SS and ann_3SS:
+            # Having both splice sites annotated favored over just one. 
+            # It is very unlikely but here for completeness.
+            annotated_intron_found = True
+            break
+
+    chrom, adj_start, adj_stop = most_likely_intron
+    intron_coords_adjusted = (adj_start == start)
     canonical_5SS = (five_SS[:2] == 'GT')
     canonical_3SS = (three_SS[1:] == 'AG')
     intron_size = abs(stop - start)
     annotated_junction = (most_likely_intron in annotated_introns)
     num_amb_junctions = len(potential_5SS)
     # These key variables returned by this script are: chrom, adj_start, adj_stop, annotated_junction. 
-    # Because analyzing the motifs is required for the adjustment process, this info is returned back by this function and saved in a dictionary.
-    # The dictionary
+    # Because analyzing the motifs is required for the adjustment process, this info is returned and saved in a dictionary.
     # The rest of the returned values in the list could be generated later in the pipeline, but it is convenient to already process this here. 
-    return [chrom, adj_start, adj_stop, five_SS, three_SS, RNA_strand, num_amb_junctions, annotated_junction, ann_5SS, ann_3SS, canonical_5SS, canonical_3SS, intron_size, intron_coords_adjusted]
+    return [chrom, adj_start, adj_stop, five_SS, three_SS, RNA_strand, num_amb_junctions, \
+        annotated_junction, ann_5SS, ann_3SS, canonical_5SS, canonical_3SS, intron_size, intron_coords_adjusted]
 
 def process_alignment(read, quality_scores_of_current_read_num, junctions_to_ambiguous_junctions, genome_fasta, \
     annotated_intron_df, annotated_introns, consensus_5SS, penalties_5SS, consensus_3SS, \
@@ -194,8 +197,8 @@ def process_alignment(read, quality_scores_of_current_read_num, junctions_to_amb
     keys = 'flag, chrom, coord, cigar, NH, adjusted_introns, perfect_gapped_alignment, splice_sites, alignment_score, RNA_strand'.split(', ')          
     
     if type(read) != pysam.libcalignedsegment.AlignedSegment or read.cigartuples == None:
-        # values = read.flag, read.reference_name, read.reference_start, read.cigarstring.replace('N', 'D'), read.get_tag('NH'), adjusted_introns, alignment_score
-        values = [None] * 5 + [[], False, [], 1000]  # alignment score is set to 1000 for unmapped reads
+        # read.flag, read.reference_name, read.reference_start, read.cigarstring.replace('D', 'N').replace('M', 'X'), read.get_tag('NH'), adjusted_introns, perfect_gapped_alignment, splice_sites, alignment_score, RNA_strand
+        values = [None] * 5 + [[], False, [], 1000, None]  # alignment score is set to 1000 for unmapped reads
         return dict(zip(keys, values)), junctions_to_ambiguous_junctions
     
     quality_scores = read.query_qualities
@@ -211,8 +214,8 @@ def process_alignment(read, quality_scores_of_current_read_num, junctions_to_amb
     # (1) assess whether alignment has a gap within the allowable range for an intron
     # (2) calculate the putative intron boundaries (i.e. 5' and 3' splice sites)
     # (3) gather metrics on the alignment, including the total mismatches, 
-    # lengths of left and right mapped segments around the gap,
-    # and the length of each segment matching perfectly on the left and right of the gap.
+        # lengths of left and right mapped segments around the gap,
+        # and the length of each segment matching perfectly on the left and right of the gap.
     mapped_segment_length = 0
     total_gapped_bp = 0
     alignment_score = 0
@@ -232,8 +235,7 @@ def process_alignment(read, quality_scores_of_current_read_num, junctions_to_amb
             total_gapped_bp += bp
             mapped_segment_lengths.append(mapped_segment_length)
             mapped_segment_length = 0
-            # the cigar operation flanking N should always be =, 
-            # but need to check this just in case
+            # the cigar operation flanking N should always be =, but check this just in case.
             if cigartuples[cigar_idx-1][1] != '=':
                 left_perfect_matches = 0
             else:
@@ -269,7 +271,7 @@ def process_alignment(read, quality_scores_of_current_read_num, junctions_to_amb
         start, stop = splice_sites[idx]
         US_perfect_matches, DS_perfect_matches = perfect_matches_flanking_splice_sites[idx]
         five_SS_Q_score, three_SS_Q_score = quality_scores_at_splice_sites[idx]
-        intron = chrom, start, stop
+        intron = chrom, start, stop, RNA_strand
         if intron not in junctions_to_ambiguous_junctions:
             junctions_to_ambiguous_junctions[intron] = adjust_ambiguous_junctions(chrom, start, stop, RNA_strand, genome_fasta, annotated_intron_df, annotated_introns, consensus_5SS, penalties_5SS, consensus_3SS, penalties_3SS)
             # adjust_ambiguous_junctions returns: chrom, amb_start, amb_stop, five_SS, three_SS, RNA_strand, num_amb_junctions, annotated_junction, ann_5SS, ann_3SS, canonical_5SS, canonical_3SS, intron_size, intron_coords_adjusted, 
