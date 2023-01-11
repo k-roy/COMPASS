@@ -1,5 +1,5 @@
 # Comparison of Multiple alignment Programs for Alternative Splice Site discovery (COMPASS)
-COMPASS identifies splice junctions in RNA-seq data with high precision and sensitivity. It is specifically designed to detect alternative, unannotated and non-canonical junctions. 
+COMPASS identifies splice junctions in RNA-seq data with high precision and sensitivity. It is specifically designed to detect alternative splicing events, especially those involving unannotated and non-canonical splice sites.
 
 ## Why COMPASS?
 COMPASS was inspired by the observation that different aligners have distinct strengths and weaknesses with mapping junctions. In many cases, it is straightforward to determine which aligner performed the "best" and likely aligned a read or read pair correctly. We therefore decided to develop a systematic computational approach to integrate the best alignments from a set of aligners with diverse mapping strategies.
@@ -29,6 +29,7 @@ This is the core program. COMPASS.sh calls the following scripts.
   * Adjustment of ambiguous junctions to most likely splice sites based on species-specific splice signals
 
 ### d) create_splice_site_bed.py
+  * Writes a bed file from the obtained splice sites
 
 ### e) add_unspliced_read_counts_to_junctions.py
 
