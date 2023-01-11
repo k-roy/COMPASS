@@ -1,4 +1,4 @@
-# Comparison of Multiple alignment Programs for Alternative Splice Site discovery (COMPASS)
+# Comparison Of Multiple alignment Programs for Alternative Splice Site discovery (COMPASS)
 COMPASS identifies splice junctions in RNA-seq data with high precision and sensitivity. It is specifically designed to detect alternative splicing events, especially those involving unannotated and non-canonical splice sites.
 
 ## Why COMPASS?
