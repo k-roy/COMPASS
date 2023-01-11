@@ -2,27 +2,27 @@
 
 This repository includes scripts for the Comparison of Multiple alignment Programs for Alternative Splice Site discovery (COMPASS).
 
-Here are the steps needed to run COMPASS.
+Here are the steps needed to run COMPASS. These can be run locally or on a server.
 
-1) COMPASS_install_required_programs.sh
+1) COMPASS_install_required_programs.sh:
 Creates the compass environment in conda.
 Installs samfixcigar from jvarkit.
 
 2) COMPASS.sh (run for each sample):
 This is the core program. COMPASS.sh calls the following scripts.
 
-  a) process_reads_and_align.sh
+  a) process_reads_and_align.sh:
   Read 3′ trimming for polyA tails and base calling quality scores (cutadapt)
   Assigns consecutive numbers to each read in the fastq file (awk).
   Alignment with multiple aligners: BBMap, STAR (both default and noncanonical splicing modes), HISAT2 (both default and noncanonical splicing modes), Magic-BLAST, and GSNAP.
   Prior to or as part of the alignment program calls, genome indices are built for each aligner only if necessary (i.e. when running the first time).
 Sam files are converted to .bam format (samtools view), sorted by mapped reference coordinates (samtools sort), cigars reformatted to SAM format 1.4 (samfixcigar), and then sorted by read numbers (samtools sort).
 
-  b) compare_splice_junctions_from_multiple_aligners.py
+  b) compare_splice_junctions_from_multiple_aligners.py:
   Comparison of Multiple Programs for Accurate Splice Site discovery (COMPASS) core program
   Adjustment of ambiguous junctions to most likely splice sites based on species-specific splice signals
 
-  c) add_exonic_intronic_sequence.py
+  c) add_exonic_intronic_sequence.py:
   Adjustment of ambiguous junctions to most likely splice sites based on species-specific splice signals
 
   d) create_splice_site_bed.py

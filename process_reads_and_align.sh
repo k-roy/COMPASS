@@ -3,7 +3,8 @@
 ## STAR (default mode and non-canonical mode), HISAT2 (default mode and non-canonical mode), and GSNAP are guided by splice site annotations.
 ## BBMap and MAGIC-BLAST are splice-site agnostic.
 ## Minimap and graphmap are recently developed, popular aligners, 
-## but are geared towards long, error prone nanopore reads and not splice junction discovery.
+## but are geared towards long, error prone nanopore reads and not splice junction discovery,
+## and therefore have not yet been integrated into COMPASS.
 
 while getopts C:R:S:F:G:A:M:N:P:L:Z: flag;
 do
