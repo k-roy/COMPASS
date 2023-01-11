@@ -15,8 +15,8 @@ Installs samfixcigar from jvarkit.
 This is the core program. COMPASS.sh calls the following scripts.
 
 ### a) process_reads_and_align.sh:
-  Read 3′ trimming for polyA tails and base calling quality scores (cutadapt)
-  Assigns consecutive numbers to each read in the fastq file (awk).
+   Markup : * Read 3′ trimming for polyA tails and base calling quality scores (cutadapt).
+   Markup : * Assigns consecutive numbers to each read in the fastq file (awk).
   Alignment with multiple aligners: BBMap, STAR (both default and noncanonical splicing modes), HISAT2 (both default and noncanonical splicing modes), Magic-BLAST, and GSNAP.
   Prior to or as part of the alignment program calls, genome indices are built for each aligner only if necessary (i.e. when running the first time).
 Sam files are converted to .bam format (samtools view), sorted by mapped reference coordinates (samtools sort), cigars reformatted to SAM format 1.4 (samfixcigar), and then sorted by read numbers (samtools sort).
