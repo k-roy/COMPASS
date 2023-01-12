@@ -76,13 +76,13 @@ echo "subsampling "$READS_TO_PROCESS" reads for "$SAMPLE
 SAMPLE=$SAMPLE"_subsampled"
 fi
 
-# echo "READS_TO_PROCESS: "$READS_TO_PROCESS
-# echo "starting process_reads_and_align.sh for "$SAMPLE_NAME;
-# sh process_reads_and_align.sh -C "$COMPASS_DIR" -R "$REFERENCE_DIR" \
-# -S "$SAMPLE_NAME" -F "$FASTA" -G "$GTF" -P $NUM_THREADS \
-# -M $MIN_INTRON_LENGTH -N $MAX_INTRON_LENGTH -A $SAMFIXCIGAR \
-# -L $READ_LENGTH -Z $READS_TO_PROCESS \
-# > $LOG_DIR$SAMPLE"_process_reads_and_align.log" 2>&1
+echo "READS_TO_PROCESS: "$READS_TO_PROCESS
+echo "starting process_reads_and_align.sh for "$SAMPLE_NAME;
+sh process_reads_and_align.sh -C "$COMPASS_DIR" -R "$REFERENCE_DIR" \
+-S "$SAMPLE_NAME" -F "$FASTA" -G "$GTF" -P $NUM_THREADS \
+-M $MIN_INTRON_LENGTH -N $MAX_INTRON_LENGTH -A $SAMFIXCIGAR \
+-L $READ_LENGTH -Z $READS_TO_PROCESS \
+> $LOG_DIR$SAMPLE"_process_reads_and_align.log" 2>&1
 
 echo "starting compare_splice_junctions_from_multiple_aligners.py for "$SAMPLE;
 python compare_splice_junctions_from_multiple_aligners.py \
