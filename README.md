@@ -11,7 +11,7 @@ At a high-level, COMPASS simply passes reads through different aligners and sele
   * Creates the compass environment in conda.
   * Installs samfixcigar from jvarkit.
 
-## 2) COMPASS.sh (run for each sample):
+## 2) COMPASS.sh:
 This is the core program. COMPASS.sh calls the following scripts.
 
 ### a) process_reads_and_align.sh:
@@ -25,13 +25,14 @@ This is the core program. COMPASS.sh calls the following scripts.
   * Comparison of Multiple Programs for Accurate Splice Site discovery (COMPASS) core program
   * Adjustment of ambiguous junctions to most likely splice sites based on species-specific splice signals
 
-### c) add_exonic_intronic_sequence.py:
-  * Adjustment of ambiguous junctions to most likely splice sites based on species-specific splice signals
+### c) analyze_exonic_and_intronic_sequence.py:
+  * Extracts sequences surrounding the detected splice sites, and selects the most likely branchpoint based on location and similarity to the consensus branchpoint sequence.
 
 ### d) create_splice_site_bed.py
-  * Writes a bed file from the obtained splice sites
+  * Writes a bed file from the obtained splice sites for extracting total read depth from the unspliced bam files.
 
 ### e) add_unspliced_read_counts_to_junctions.py
+ * Modifies the junction table created in (b) with the unspliced read counts for each junction to enable calculating splicing efficiency (SE).
 
 ## 3) COMPASS_combine_junction_tables_from_multiple_samples.py
   * This script performs alternative splice junction calling and junction quality filtering.
