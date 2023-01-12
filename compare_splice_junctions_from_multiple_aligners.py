@@ -2,7 +2,8 @@
 '''
 @author: kevinroy
 
-This script selects the optimal alignment based on a score calculated from user-defined penalties for each CIGAR operation. 
+This script selects the optimal alignment from a panel of multiple aligners based on a score \
+    calculated from user-defined penalties for each CIGAR operation. 
 -Ties are broken in various scenarios: 
     -ungapped alignment favored over gapped alignment (to be conservative)
     -annotated junctions favored over unannotated junctions (to be conservative)
@@ -11,9 +12,12 @@ This script selects the optimal alignment based on a score calculated from user-
 output files:
 
 -optimal COMPASS alignment as a single BAM file, along with separate bam files for ungapped (UGA), 
-annotated spliced junctions (ASJ), and unannotated spliced junctions (USJ) files.
+annotated spliced junctions (ASJ), and unannotated spliced junctions (USJ) files. The UGA reads are \
+written to different strands to accommodate calculation of unspliced read signal with tools that don't \
+consider strandedness of reads.
 
--alignment info at the level of each read pair * aligner, unannotated_gapped_alignments_outfile
+-alignment info at the level of each read pair * aligner, annotated_gapped_alignments_outfile and \
+    unannotated_gapped_alignments_outfile written separately
     columns:
     'read_pair_ID', 'aligner_has_min_score', 'min_score_has_annotated_intron', 'min_score_has_no_intron', \
     'aligner', 'score',  'num_introns_found', 'perfect_gapped_alignment', 'chrom', 'amb_start', \
@@ -23,7 +27,8 @@ annotated spliced junctions (ASJ), and unannotated spliced junctions (USJ) files
     'read1_cigar', 'read1_NH', 'read2_flag', 'read2_chrom', 'read2_coord', 'read2_cigar', 'read2_NH'
 
 -alignment info at the level of each junction identified by COMPASS, an 'integrated' junction file with \
-    summary statistics on agreement between aligners for each junction, including the read counts for each aligner agree on the selected junction
+    summary statistics on agreement between aligners for each junction, \
+        including the read counts for each aligner agreeing on the selected junction.
 
     columns:
     sample_info_header = ['sample_name', 'total_reads']
@@ -44,10 +49,11 @@ annotated spliced junctions (ASJ), and unannotated spliced junctions (USJ) files
     stats_header_part_4 = 'mean_five_SS_Q_score, mean_three_SS_Q_score'.split(', ')
 
 Notes:
--BAM for all aligners must be name-sorted, where read names are chronologically numbered prior to mapping
+-input BAM for all aligners must be name-sorted, where read names are chronologically numbered prior to mapping
 
--CIGAR format must be N for intron gap, M for match, S for soft-clip, I for insertion, D for deletion, 
-    and X for mismatch (version 1.4 and above, see: https://samtools.github.io/hts-specs/SAMv1.pdf)
+-CIGAR format must be N or D for intron gap (D greater than minimum_intron_length will be scored as N), 
+    M for match, S for soft-clip, I for insertion, D for deletion, and X for mismatch 
+    (version 1.4 and above, see: https://samtools.github.io/hts-specs/SAMv1.pdf).
     For some aligners, this requires fixing the CIGAR strings for each aligner to be consistent.
     COMPASS uses samfixcigar, which requires that alignments are first coord sorted. 
     All of this is handled in the script: COMPASS_process_reads_and_align.sh
@@ -56,10 +62,38 @@ Notes:
 useful for examining the alignments of specific junctions. It may be desirable to isolate all the reads mapping to specific
 junctions. This can be done with the script: extract_alignments_for_specific_COMPASS_junctions_from_multiple_aligners.py
 
--The read pair * aligner ASJ vs. USJ files are useful for exploring the technical \
-    performance of each aligner for different types of junctions. The annotated file is typically very large.
+-The read pair * aligner ASJ and USJ files are useful for exploring the technical \
+    performance of each aligner for different types of junctions. \
+        The ASJ (annotated splice junction) file is typically very large.
 
--The COMPASS junction file is useful for exploring the biology of the splice junctions.
+-The COMPASS junction file is useful for exploring the quality metrics and read support of the splice junctions. Notes on several columns:
+# min_score_unannotated_intron_junctions_disagree : When the min score is an unannotated junction, \
+# is there complement agreement on the junction?
+# num_introns_found: For reads containing this junction, how often are other junctions found in the same read pair?
+
+-For the read pair * aligner and COMPASS junction files, ambiguous junctions are adjusted to enable a fair \
+    junction-level comparison between aligners, \
+    and to identify the 'most likely' splice site based on wether any junction in the ambiguous stretch \
+    matches an annotated junction, and if not, based on maximizing the combined score of 5SS and 3SS \
+        based on user-provided scores for each position.
+
+for debugging:
+
+COMPASS_DIR='/oak/stanford/groups/larsms/kevinroy/processed_data/COMPASS/'
+GENOME_REF_DIR='/oak/stanford/groups/larsms/kevinroy/processed_data/COMPASS/genome_references/GRCh38/'
+sample_name='Flag-PRPF18_2-9-D_1'
+FASTA='/oak/stanford/groups/larsms/kevinroy/processed_data/COMPASS/genome_references/GRCh38/GRCh38_latest_genomic.fasta'
+INTRONS_FILE='/oak/stanford/groups/larsms/kevinroy/processed_data/COMPASS/genome_references/GRCh38/HISAT2_annotated_index/GRCh38_latest_genomic_splice_sites.txt'
+NUM_THREADS=8
+MIN_INTRON_LENGTH=20
+MAX_INTRON_LENGTH=200000
+ALIGNERS_FILE='/oak/stanford/groups/larsms/kevinroy/processed_data/COMPASS/sample_aligner_info.tsv'
+reads_to_process=10000
+
+exit()
+ssh sh03-07n10
+conda activate compass
+python
 '''
 
 import os
@@ -67,8 +101,9 @@ import pandas as pd
 import pysam
 import statistics
 import timeit
-import random 
-import COMPASS_functions_human
+import random
+os.chdir('/oak/stanford/groups/larsms/kevinroy/processed_data/COMPASS/scripts')
+import COMPASS_functions
 import importlib
 importlib.reload(COMPASS_functions)
 from COMPASS_functions import *
@@ -90,10 +125,13 @@ MAX_INTRON_LENGTH = int(argv[8])
 ALIGNERS_FILE = argv[9]
 reads_to_process = int(argv[10])
 
-if reads_to_process < 0:
-    reads_to_process = 10**10
+for idx in range(len(argv)):
+    print(argv[idx])
 
-READ_NUM_PROGRESS = 10**3
+if reads_to_process < 0:
+    reads_to_process = 10**10 # 10**6
+
+READ_NUM_PROGRESS = 10**4
 
 LOG_DIR = COMPASS_DIR + 'log/'
 SEPARATE_ALIGNMENTS_DIR = COMPASS_DIR + 'separate_alignments/'
@@ -106,11 +144,15 @@ sample_suffix = '_name_sorted.bam'
 WRITE_ALL_COMPASS_BAM = True
 WRITE_UNANNOTATED_JUNCTIONS_BAM = True
 
+MAX_EDIT_DIST_TO_CONSIDER = 8 
+# This is the max bp involved in mismatches and indels in both reads (not including introns) to consider for COMPASS.
+# Short reads with this many mismatches are unlikely to give a confident junction.
 MISMATCH_DIST_FROM_JUNCTION_DISALLOWED = 10 
 # Mismatches near the junction have a chance of impacting alignment accuracy.
 # A single mismatch within 10 bp of a junction raises a flag. These are reported and can be filtered later.
 
-# Splice site penalties are only used to resolve ambiguous junction alignments. 
+# Splice site penalties are only used to resolve ambiguous junction alignments, where no potential junction maps to an
+# annotated 5'SS or 3'SS.
 # These do not impact alignment scores and are not used for selecting the optimal aligner for a given read.
 
 CONSENSUS_5SS = ['G', 'T', 'AG', 'TAC', 'G', 'T'] # the 6th position in human 5'SS does not seem to matter as much
@@ -119,7 +161,13 @@ PENALTIES_5SS = [6,   4,   1,   1,    2,  0.5]
 CONSENSUS_3SS = ['CT', 'A', 'G']
 PENALTIES_3SS = [1,     3,   4]
 
+# This script favors major spliceosome introns with GT/AG introns.
+# Alternate dinucleotide combinations, including AT-AC introns,
+# will be searched for in the downstream module add_exonic_intronic_sequence.py.
+
 NUM_ITEMS_TO_REPORT = 10
+# For lists of junction attributes, such as the number and counts of unique cigars supporting the junction, 
+# this is the number of the top elements to report after sorting by most abundant counts.
 
 genome_fasta = pysam.FastaFile(FASTA)
 
@@ -136,7 +184,7 @@ for index, row in aligner_df.iterrows():
     aligners_to_bam[aligner] = pysam.AlignmentFile(bam_filename, 'rb')
     aligner_to_current_read_num[aligner] = 0
 
-# This file looks like this:
+# The annotated intron file INTRONS_FILE looks like this:
 # NC_000001.11	12226	12612	+
 # NC_000001.11	12720	13220	+
 
@@ -149,17 +197,14 @@ annotated_intron_df, ambiguous_junction_to_annotated_junction, ambiguous_annotat
 
 ###################### OPEN OUTPUT FILES FOR WRITING ##########################
 
-# open files: COMPASS_bam_outfile, COMPASS_UGA_plus_strand_bam_outfile, COMPASS_UGA_minus_strand_bam_outfile, COMPASS_ASJ_bam_outfile, COMPASS_USJ_bam_outfile, annotated_gapped_alignments_outfile, unannotated_gapped_alignments_outfile, splice_junction_counts_outfile
+# open files: COMPASS_bam_outfile, COMPASS_UGA_plus_strand_bam_outfile, COMPASS_UGA_minus_strand_bam_outfile, 
+# COMPASS_ASJ_bam_outfile, COMPASS_USJ_bam_outfile, annotated_gapped_alignments_outfile, unannotated_gapped_alignments_outfile, splice_junction_counts_outfile
 
 # all reads written to COMPASS bam file
 # write UGA (ungapped alignments), ASJ (annotated splice junction alignments) and USJ (unannotated splice junction alignments) separately
-# UGA is written to separate strands for extracting unspliced coverage at intron junctions in a later step
+# UGA is further written to separate strands for extracting unspliced coverage at intron junctions in a later step
 # pysam pileup lacks the ability to distinguish between strands, so it is easier to write UGA to separate strands
 # USJ enables viewing alignments for unannotated introns in IGV
-
-# TODO: make these files optional to write, to enable saving space
-# WRITE_ALL_COMPASS_BAM = True
-# WRITE_UNANNOTATED_JUNCTIONS = True
      
 log_outfilename = LOG_DIR + sample_name + '_compare_splice_junctions_from_multiple_aligners_python_output.log'
 log_outfile = open(log_outfilename, 'w')
@@ -264,7 +309,6 @@ adjusted_intron_keys_length = len(adjusted_intron_keys)
 def equivalent_alignments(read1_alignments, read2_alignments, idx_lst):
     return len(set([read1_alignments[i] for i in idx_lst])) == len(set([read2_alignments[i] for i in idx_lst])) == 1
 
-
 elapsed_time = timeit.default_timer() - start_time
 log_message = ('Genome fasta and intron annotations processed in ' + str(elapsed_time/60) + ' minutes\nStarting COMPASS alignment comparisons...\n')
 print(log_message)
@@ -294,7 +338,8 @@ while read_num <= reads_to_process and not eof:
         'equivalent junctions for all min score aligners when a min score has annotated junction: ' + str(min_score_has_annotated_intron_junctions_equal) + '\n' + \
         # Aligners can disagree on the details of the complete alignment \
         # but have equivalent junctions, for example in the representation \ 
-        # of an indel or MNP near the end of a read, where the splice site is identical.
+        # of an indel or MNP near the end of a read, \
+        # where the splice site at another position in the read is otherwise identical.
         'equivalent alignments for all min score aligners when a min score has unannotated junction: ' + str(min_score_has_unannotated_intron_cigars_equal) + '\n' + \
         'equivalent junctions found for all min score aligners when a min score has unannotated junction: ' + str(min_score_has_unannotated_intron_junctions_equal) + '\n')
         print(log_message)
@@ -389,77 +434,85 @@ while read_num <= reads_to_process and not eof:
         alignment_scores.append(R1['alignment_score'] + R2['alignment_score'])
         num_intron_found_lst.append(len(set(R1['splice_sites'] + R2['splice_sites'])))
     best_score = min(alignment_scores)
-    min_score_has_annotated_intron = False
-    min_score_has_no_intron = False
+    if best_score < MAX_EDIT_DIST_TO_CONSIDER:
+        min_score_has_annotated_intron = False
+        min_score_has_no_intron = False
 
-    # initialize lists for info on each alignment, access later by idx using this construct: for idx in range(len(aligners))
-    perfect_gapped_alignment_lst = []
-    read1_alignments = []
-    read2_alignments = []
-    splice_junction_lst = []
-    intron_lengths_lst = [] # for each read, take the maximum intron length
-    comment_tag_lst = []
-    alignment_type_lst = []
-    num_annotated_introns_lst = []
-    idx_without_mismatch_near_junction = []
-    idx_with_best_score = []
-    idx_best_score_with_no_intron = []
-    idx_best_score_with_annotated_intron = []
-    # need to loop through the aligners first to pre-compute:  
-    # min_score_has_annotated_intron, min_score_has_no_intron, perfect_gapped_alignment_lst
-    for idx in range(len(aligners)):
-        aligner = aligners[idx]
-        R1 = R1_lst[idx]
-        R2 = R2_lst[idx]
-        splice_junctions_in_read_pair = []
-        intron_lengths = [0]
-        annotated_introns_found = 0
-        for e in R1, R2:
-            if e['adjusted_introns'] != []:
-            # values in adjusted_introns list: chrom, adj_start, adj_stop, five_SS, three_SS, \
-            # RNA_strand, num_amb_junctions, annotated_junction, ann_5SS, ann_3SS, canonical_5SS, \
-            # canonical_3SS, intron_size, intron_coords_adjusted, mismatch_near_junction, \
-            # US_perfect_matches, DS_perfect_matches, five_SS_Q_score, three_SS_Q_score
+        # initialize lists for info on each alignment, access later by idx using this construct: for idx in range(len(aligners))
+        perfect_gapped_alignment_lst = []
+        read1_alignments = []
+        read2_alignments = []
+        splice_junction_lst = []
+        intron_lengths_lst = [] # for each read, take the maximum intron length
+        comment_tag_lst = []
+        alignment_type_lst = []
+        num_annotated_introns_lst = []
+        num_unannotated_introns_lst = []
+        idx_without_mismatch_near_junction = []
+        idx_with_best_score = []
+        idx_best_score_with_no_intron = []
+        idx_best_score_with_annotated_intron = []
+        # need to loop through the aligners first to pre-compute:  
+        # min_score_has_annotated_intron, min_score_has_no_intron, perfect_gapped_alignment_lst
+        for idx in range(len(aligners)):
+            aligner = aligners[idx]
+            R1 = R1_lst[idx]
+            R2 = R2_lst[idx]
+            splice_junctions_in_read_pair = []
+            intron_lengths = [0]
+            annotated_introns_found = 0
+            unannotated_introns_found = 0
+            for e in R1, R2:
+                if e['adjusted_introns'] != []:
+                # values in adjusted_introns list: chrom, adj_start, adj_stop, five_SS, three_SS, \
+                # RNA_strand, num_amb_junctions, annotated_junction, ann_5SS, ann_3SS, canonical_5SS, \
+                # canonical_3SS, intron_size, intron_coords_adjusted, mismatch_near_junction, \
+                # US_perfect_matches, DS_perfect_matches, five_SS_Q_score, three_SS_Q_score
 
-            # chrom, adj_start, adj_stop, five_SS, three_SS, RNA_strand, num_amb_junctions, \
-            # annotated_junction, ann_5SS, ann_3SS, canonical_5SS, canonical_3SS = adjusted_intron  
+                # chrom, adj_start, adj_stop, five_SS, three_SS, RNA_strand, num_amb_junctions, \
+                # annotated_junction, ann_5SS, ann_3SS, canonical_5SS, canonical_3SS = adjusted_intron  
 
-            # read 1 and read 2 info entered on separate lines if both contain a gapped alignment, 
-            # later on these can be further processed and integrated by groupby operations
+                # read 1 and read 2 info entered on separate lines if both contain a gapped alignment, 
+                # later on these can be further processed and integrated by groupby operations
 
-            # if a read contains more than one intron (quite rare), it is entered on multiple lines
-                for intron in e['adjusted_introns']:
-                    splice_junctions_in_read_pair.append(tuple([intron[e] for e in  'chrom, adj_start, adj_stop, five_SS, three_SS, RNA_strand'.split(', ')] ))
-                    if intron['annotated_junction']:
-                        annotated_introns_found += 1
-                    if not intron['mismatch_near_junction']:
-                        idx_without_mismatch_near_junction.append(idx)  
-                    intron_lengths.append(intron['intron_size'])
-        intron_lengths_lst.append(max(intron_lengths))  
-        splice_junction_lst.append(tuple(splice_junctions_in_read_pair))
-        num_annotated_introns_lst.append(annotated_introns_found)
-        if alignment_scores[idx] == best_score:
-            idx_with_best_score.append(idx)
-            if annotated_introns_found > 0:
-                min_score_has_annotated_intron = True
-                idx_best_score_with_annotated_intron.append(idx)
-            if splice_junctions_in_read_pair == []:
-                min_score_has_no_intron = True
-                idx_best_score_with_no_intron.append(idx)
-        # if introns are present, is there a perfect gapped alignment present in the read pair?
-        perfect_gapped_alignment_lst.append(R1['perfect_gapped_alignment'] or R2['perfect_gapped_alignment'])  
+                # if a read contains more than one intron (quite rare), it is entered on multiple lines
+                    for intron in e['adjusted_introns']:
+                        splice_junctions_in_read_pair.append(tuple([intron[e] for e in  'chrom, adj_start, adj_stop, five_SS, three_SS, RNA_strand'.split(', ')] ))
+                        if intron['annotated_junction']:
+                            annotated_introns_found += 1
+                        else:
+                            unannotated_introns_found += 1
+                        if not intron['mismatch_near_junction']:
+                            idx_without_mismatch_near_junction.append(idx)  
+                        intron_lengths.append(intron['intron_size'])
+            intron_lengths_lst.append(max(intron_lengths))  
+            splice_junction_lst.append(tuple(splice_junctions_in_read_pair))
+            num_annotated_introns_lst.append(annotated_introns_found)
+            num_unannotated_introns_lst.append(unannotated_introns_found)
+            if alignment_scores[idx] == best_score:
+                idx_with_best_score.append(idx)
+                if annotated_introns_found > 0:
+                    min_score_has_annotated_intron = True
+                    idx_best_score_with_annotated_intron.append(idx)
+                if splice_junctions_in_read_pair == []:
+                    min_score_has_no_intron = True
+                    idx_best_score_with_no_intron.append(idx)
+            # if introns are present, is there a perfect gapped alignment present in the read pair?
+            perfect_gapped_alignment_lst.append(R1['perfect_gapped_alignment'] or R2['perfect_gapped_alignment'])  
 
-        if num_intron_found_lst[idx] == 0:
-            alignment_type = 'UGA'  
-        else:
-            if num_annotated_introns_lst[idx] > 0:
-                alignment_type = 'ASJ'
+            if num_intron_found_lst[idx] == 0:
+                alignment_type = 'UGA'  
             else:
-                alignment_type = 'USJ'
-        alignment_type_lst.append(alignment_type)
-
-        comment_tag = [aligner, R1['chrom'], R1['coord'], R1['cigar'], R2['chrom'], R2['coord'], R2['cigar'], alignment_scores[idx], alignment_type_lst[idx]]
-        comment_tag_lst.append(','.join([str(e) for e in comment_tag]) )
+                # if a read harbors multiple junctions, and a single unannotated intron is found, 
+                # the read is written to the unannotated splice junction file.
+                if num_unannotated_introns_lst[idx] > 0:
+                    alignment_type = 'USJ'
+                else:
+                    alignment_type = 'ASJ'
+            alignment_type_lst.append(alignment_type)
+            
+            comment_tag = [aligner, R1['chrom'], R1['coord'], R1['cigar'], R2['chrom'], R2['coord'], R2['cigar'], alignment_scores[idx], alignment_type_lst[idx]]
+            comment_tag_lst.append(','.join([str(e) for e in comment_tag]) )
 
         # write the complete comparison table for all read alignments (big table = num reads X num aligners) 
         for idx in range(len(aligners)):            
