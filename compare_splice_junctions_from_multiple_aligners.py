@@ -77,23 +77,6 @@ junctions. This can be done with the script: extract_alignments_for_specific_COM
     matches an annotated junction, and if not, based on maximizing the combined score of 5SS and 3SS \
         based on user-provided scores for each position.
 
-for debugging:
-
-COMPASS_DIR='/oak/stanford/groups/larsms/kevinroy/processed_data/COMPASS/'
-GENOME_REF_DIR='/oak/stanford/groups/larsms/kevinroy/processed_data/COMPASS/genome_references/GRCh38/'
-sample_name='Flag-PRPF18_2-9-D_1'
-FASTA='/oak/stanford/groups/larsms/kevinroy/processed_data/COMPASS/genome_references/GRCh38/GRCh38_latest_genomic.fasta'
-INTRONS_FILE='/oak/stanford/groups/larsms/kevinroy/processed_data/COMPASS/genome_references/GRCh38/HISAT2_annotated_index/GRCh38_latest_genomic_splice_sites.txt'
-NUM_THREADS=8
-MIN_INTRON_LENGTH=20
-MAX_INTRON_LENGTH=200000
-ALIGNERS_FILE='/oak/stanford/groups/larsms/kevinroy/processed_data/COMPASS/sample_aligner_info.tsv'
-reads_to_process=10000
-
-exit()
-ssh sh03-07n10
-conda activate compass
-python
 '''
 
 import os
@@ -102,7 +85,6 @@ import pysam
 import statistics
 import timeit
 import random
-os.chdir('/oak/stanford/groups/larsms/kevinroy/processed_data/COMPASS/scripts')
 import COMPASS_functions
 import importlib
 importlib.reload(COMPASS_functions)
