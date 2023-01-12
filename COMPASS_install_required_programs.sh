@@ -1,6 +1,6 @@
 #!/bin/bash
 
-######################################### INSTALL PROGRAMS BEGIN ##############################################
+######################################### INSTALL PROGRAMS BEGIN ############################################
 ### EXTERNAL PROGRAMS NEEDED (ALL CAN BE DOWNLOADED WITH CONDA EXCEPT SAMFIXCIGAR) ###
 
 # genome fasta downloaded from SGD (chromosome names reformatted to standard chrI, chrII etc, chrMito manually)
