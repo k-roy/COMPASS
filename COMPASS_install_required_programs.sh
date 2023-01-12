@@ -1,7 +1,7 @@
 #!/bin/bash
 
 ######################################### INSTALL PROGRAMS BEGIN ############################################
-### EXTERNAL PROGRAMS NEEDED (ALL CAN BE DOWNLOADED WITH CONDA EXCEPT SAMFIXCIGAR) ###
+### EXTERNAL PROGRAMS ARE INSTALLED AS PART OF THE COMPASS CONDA ENVIRONMENT, EXCEPT SAMFIXCIGAR WHICH MUST BE DOWNLOADED FROM JVARKIT.GIT ###
 
 # genome fasta downloaded from SGD (chromosome names reformatted to standard chrI, chrII etc, chrMito manually)
 # genome gff downloaded from SGD (chromosome names reformatted to standard chrI, chrII etc, chrMito manually)
