@@ -64,6 +64,7 @@ raw_R2=$RAW_FASTQ_DIR$SAMPLE"_R2.fastq.gz"
 
 if [[ $READS_TO_PROCESS -lt 1 ]];
 then
+echo "READS_TO_PROCESS: "$READS_TO_PROCESS
 echo "processing all reads for "$SAMPLE
 else
 echo "subsampling "$READS_TO_PROCESS" reads for "$SAMPLE
@@ -73,9 +74,15 @@ SAMPLE=$SAMPLE"_subsampled"
 # and to subsample the reads in the range from 100,000 to 1 million 
 subsampled_R1=$RAW_FASTQ_DIR$SAMPLE"_1.fastq.gz"
 subsampled_R2=$RAW_FASTQ_DIR$SAMPLE"_2.fastq.gz"
-# reformat.sh in1=$raw_R1 in2=$raw_R2 out1=$subsampled_R1 out2=$subsampled_R2 samplereadstarget=$READS_TO_PROCESS
+if test -f "$subsampled_R1"; then
+    echo "$subsampled_R1 exists."
+else
+	echo "$subsampled_R1 does not exist. Subsampling reads now..."
+	reformat.sh in1=$raw_R1 in2=$raw_R2 out1=$subsampled_R1 out2=$subsampled_R2 samplereadstarget=$READS_TO_PROCESS
+fi
 raw_R1=$subsampled_R1
 raw_R2=$subsampled_R2
+
 fi
 
 trimmed_R1=$TRIMMED_DIR$SAMPLE"_trimmed_R1.fastq"
