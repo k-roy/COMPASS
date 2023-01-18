@@ -129,7 +129,8 @@ def adjust_ambiguous_junctions(chrom, start, stop, RNA_strand, genome_fasta, \
     potential_3SS = []
     SS_scores = []
 
-    # Splice site motifs will only be favored if no splice site in the ambiguouos stretch matches an annotated site.
+    # Splice site motifs will only be favored if no splice site in the ambiguous 
+    # stretch matches an annotated site.
     for junction in junctions:
         chrom, amb_start, amb_stop = junction
         if RNA_strand == '+':
@@ -175,9 +176,10 @@ def adjust_ambiguous_junctions(chrom, start, stop, RNA_strand, genome_fasta, \
     intron_size = abs(stop - start)
     annotated_junction = (most_likely_intron in annotated_introns)
     num_amb_junctions = len(potential_5SS)
-    # These key variables returned by this script are: chrom, adj_start, adj_stop, annotated_junction. 
+    # The key variables returned by this script are: chrom, adj_start, adj_stop, annotated_junction. 
     # Because analyzing the motifs is required for the adjustment process, this info is returned and saved in a dictionary.
-    # The rest of the returned values in the list could be generated later in the pipeline, but it is convenient to already process this here. 
+    # The rest of the returned values in the list could be generated later in the pipeline, 
+    # but it is convenient to already process this here. 
     return [chrom, adj_start, adj_stop, five_SS, three_SS, RNA_strand, num_amb_junctions, \
         annotated_junction, ann_5SS, ann_3SS, canonical_5SS, canonical_3SS, intron_size, intron_coords_adjusted]
 
