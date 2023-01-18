@@ -19,20 +19,21 @@ This is the core program. COMPASS.sh calls the following scripts.
   * Assigns consecutive numbers to each read in the fastq file (awk).
   * Alignment with multiple aligners: BBMap, STAR (both default and noncanonical splicing modes), HISAT2 (both default and noncanonical splicing modes), Magic-BLAST, and GSNAP.
   * Prior to or as part of the alignment program calls, genome indices are built for each aligner only if necessary (i.e. when running the first time).
-  * Sam files are converted to .bam format (samtools view), sorted by mapped reference coordinates (samtools sort), cigars reformatted to SAM format 1.4 (samfixcigar), and then sorted by read numbers (samtools sort).
+  * Sam files are converted to bam format (samtools view), sorted by mapped reference coordinates (samtools sort), cigars reformatted to SAM format 1.4 (samfixcigar), and then sorted by read numbers (samtools sort).
 
 ### b) compare_splice_junctions_from_multiple_aligners.py:
   * Comparison of Multiple Programs for Accurate Splice Site discovery (COMPASS) core program
   * Adjustment of ambiguous junctions to most likely splice sites based on species-specific splice signals
 
 ### c) analyze_exonic_and_intronic_sequence.py:
-  * Extracts sequences surrounding the detected splice sites, and selects the most likely branchpoint based on location and similarity to the consensus branchpoint sequence.
+  * Extracts sequences surrounding the detected splice sites to examine motifs.
+  * Selects the most likely branchpoint based on location and similarity to the consensus branchpoint sequence.
 
 ### d) create_splice_site_bed.py
-  * Writes a bed file from the obtained splice sites for extracting total read depth from the unspliced bam files.
+  * Writes a bed file from the obtained splice sites for extracting total read depth from the unspliced bam files (samtools depth).
 
 ### e) add_unspliced_read_counts_to_junctions.py
- * Modifies the junction table created in (b) with the unspliced read counts for each junction to enable calculating splicing efficiency (SE).
+  * Modifies the junction table created in (b) with the unspliced read counts for each junction from (d) for calculating splicing efficiency (SE).
 
 ## 3) COMPASS_combine_junction_tables_from_multiple_samples.py
-  * This script performs alternative splice junction calling and junction quality filtering.
+  * Performs alternative splice junction calling and junction quality filtering.
