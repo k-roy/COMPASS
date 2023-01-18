@@ -1,31 +1,39 @@
 #!/bin/bash
 
-################################ HARD DRIVE SPACE WARNING ################################
+######################### HARD DRIVE SPACE WARNING ############################
 # The COMPASS directory needs to have substantial free space for the alignment files,
 # on the order of 10X the size of the fastq.gz files when run on many aligners. 
 # These can be deleted at the end of the pipeline for each sample to avoid accumulating excess storage.
 
-##################### VARIABLE AND PATH DEFINITIONS BEGIN #####################
+##################### VARIABLE AND PATH DEFINITIONS #####################
 NUM_THREADS=32 
 # Change to allowable number of threads for your system.
 
 READS_TO_PROCESS=-1
-# Subsample this many reads to test the pipeline.
+# Subsample this many reads to test the pipeline (typically 100,000 reads).
 # Set to -1 for all reads after tests pass.
 
 # change $HOME variable to your desired directory
 COMPASS_DIR="$HOME/COMPASS/"
+
+# download genome references and put into this folder
 REFERENCE_DIR=$COMPASS_DIR"genome_references/"
+
+# path to samfixcigar java program
+SAMFIXCIGAR=$COMPASS_DIR"jvarkit/dist/samfixcigar.jar"
+
+# S. cerevisiae genome reference
 GENOME_VERSION="S288C_reference_sequence_R64-2-1_20150113_reformatted_chromosome_names"
+
 FASTA=$REFERENCE_DIR$GENOME_VERSION".fasta"
 GFF=$REFERENCE_DIR$GENOME_VERSION".gff"
 GTF=$REFERENCE_DIR$GENOME_VERSION".gtf"
-SAMFIXCIGAR="/oak/stanford/groups/larsms/kevinroy/scripts/jvarkit/dist/samfixcigar.jar"
 NUM_THREADS=16
 MIN_INTRON_LENGTH=20
 MAX_INTRON_LENGTH=2000 # typically set to 200,000 for human introns
-ACCESSION="NA"
-READ_LENGTH=75
+
+ACCESSION= # set to "NA" for datasets not on SRA
+READ_LENGTH=100
 READS_TO_PROCESS=-1 # 1000000 # 
 # Subsample this many reads if SUBSAMPLE_READS is set to true.
 # set to -1 for all reads
@@ -33,9 +41,12 @@ READS_TO_PROCESS=-1 # 1000000 #
 ALIGNERS_FILE=$COMPASS_DIR"sample_aligner_info.tsv"
 HISAT2_GENOME_DIR=$REFERENCE_DIR"HISAT2_annotated_index"
 
+# the introns file is needed for HISAT2
 INTRONS_FILE=$REFERENCE_DIR"saccharomyces_cerevisiae_R64-2-1_20150113_introns.tsv"
 
-# The sample_aligner_info file tells COMPASS which alignment programs to use.
+# The sample_aligner_info.txt file tells COMPASS which alignment programs to use from among
+# BBMap, STAR (both default and noncanonical splicing modes), 
+# HISAT2 (both default and noncanonical splicing modes), Magic-BLAST, and GSNAP.
 ALIGNERS_FILE=$COMPASS_DIR"sample_aligner_info.txt"
 
 ## ASSIGN AND CREATE SUBDIRECTORIES
@@ -54,15 +65,13 @@ mkdir $COMPASS_JUNCTIONS_DIR
 LOG_DIR=$COMPASS_DIR"log/"
 mkdir $LOG_DIR
 
-###################### VARIABLE AND PATH DEFINITIONS END ######################
-
+################# ACTIVATE COMPASS ENVIRONMENT IN CONDA ###################
 conda activate compass
 
 # gffread is needed to convert the S. cerevisiae GFF file from SGD to GTF format
 gffread -T --force-exons --gene2exon $GFF -o $GTF $GFF
 
-####################### SAMPLE PROCESSING COMMANDS BEGIN #######################
-
+####################### SAMPLE PROCESSING COMMANDS #######################
 echo "File name is "$0 # holds the current script
 echo "Sample name is "$1
 SAMPLE=$1
@@ -112,5 +121,3 @@ done
 done
 
 python add_unspliced_read_counts_to_junctions.py $COMPASS_JUNCTIONS_DIR $SAMPLE
-
-####################### SAMPLE PROCESSING COMMANDS END #######################
