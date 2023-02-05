@@ -1,11 +1,11 @@
 # Comparison Of Multiple alignment Programs for Alternative Splice Site discovery (COMPASS)
-COMPASS identifies splice junctions in RNA-seq data with high precision and sensitivity. It is specifically designed to detect alternative splicing events, especially those involving unannotated and non-canonical splice sites.
+COMPASS identifies splice junctions in RNA-seq data with high precision and sensitivity. It is designed to detect alternative splicing events, especially those involving unannotated and non-canonical splice sites. In addition, COMPASS can be used to obtain an optimal set of alignments for reads in general.
 
 ## Why COMPASS?
-COMPASS was inspired by the observation that different aligners have complementary strengths and weaknesses with mapping junctions. In many cases, it is straightforward to determine which aligner performed the "best" and therefore more likely aligned a read or read pair correctly. We developed a systematic computational approach to integrate the best alignments from a set of aligners with diverse mapping strategies.
+COMPASS was inspired by the observation that different aligners have complementary strengths and weaknesses when mapping spliced reads across introns. In many cases, it is straightforward to determine which aligner performed the "best" and therefore more likely aligned a read or read pair correctly. To improve read mapping accuracy, we developed a systematic computational approach to select the best alignment for each read from a panel of aligners with diverse mapping strategies.
 
 ## What does COMPASS do?
-COMPASS passes reads through different aligners and selects the best alignment based on fewest mismatches with the reference. Ties (alignments with the same score but differing on junction location) are broken by specific criteria. Under the hood, COMPASS handles many implementation details prior to scoring each alignment. This includes trimming and quality filtering of the raw reads, disabling soft-clipping to ensure that aligners map the reads in their entirety, and reformatting alignment representations to ensure consistency for comparisons.
+COMPASS first passes reads through different aligners and then selects the best alignment based on fewest mismatches with the reference. Ties (alignments with the same score but differing on junction location) are broken by specific criteria. Under the hood, COMPASS handles numerous implementation details prior to scoring each alignment, including trimming and quality filtering of raw reads, disabling soft-clipping to ensure that aligners map the reads in their entirety, and reformatting alignment representations to ensure consistency for comparisons.
 
 ## 1) COMPASS_install_required_programs.sh
   * Creates the compass environment in conda.
