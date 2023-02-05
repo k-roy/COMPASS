@@ -5,7 +5,7 @@ COMPASS identifies splice junctions in RNA-seq data with high precision and sens
 COMPASS was inspired by the observation that different aligners have complementary strengths and weaknesses with mapping junctions. In many cases, it is straightforward to determine which aligner performed the "best" and therefore more likely aligned a read or read pair correctly. We developed a systematic computational approach to integrate the best alignments from a set of aligners with diverse mapping strategies.
 
 ## What does COMPASS do?
-At a high-level, COMPASS simply passes reads through different aligners and selects the best alignment based on fewest mismatches with the reference. Ties (alignments with the same score but differing on junction location) are broken by specific criteria. Under the hood, COMPASS handles many implementation details prior to scoring each alignment. This includes trimming and quality filtering of the raw reads, disabling soft-clipping to ensure that aligners map the reads in their entirety, and reformatting alignment representations to ensure consistency for comparisons.
+COMPASS passes reads through different aligners and selects the best alignment based on fewest mismatches with the reference. Ties (alignments with the same score but differing on junction location) are broken by specific criteria. Under the hood, COMPASS handles many implementation details prior to scoring each alignment. This includes trimming and quality filtering of the raw reads, disabling soft-clipping to ensure that aligners map the reads in their entirety, and reformatting alignment representations to ensure consistency for comparisons.
 
 ## 1) COMPASS_install_required_programs.sh
   * Creates the compass environment in conda.
