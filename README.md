@@ -5,10 +5,10 @@ COMPASS identifies splice junctions in RNA-seq data with high precision and sens
 COMPASS was inspired by the observation that different aligners have complementary strengths and weaknesses when mapping spliced reads across introns. In many cases, it is straightforward to determine which aligner performed the "best" and therefore more likely aligned a read or read pair correctly. To improve read mapping accuracy, we developed a systematic computational approach to select the best alignment for each read from a panel of aligners with diverse mapping strategies.
 
 ## What does COMPASS do?
-COMPASS first passes reads through different aligners and then selects the best alignment based on fewest mismatches with the reference. Ties (alignments with the same score but differing on junction location) are broken by specific criteria. Under the hood, COMPASS handles numerous implementation details prior to scoring each alignment, including trimming and quality filtering of raw reads, disabling soft-clipping to ensure that aligners map the reads in their entirety, and reformatting alignment representations to ensure consistency for comparisons.
+COMPASS first passes RNA-seq reads through different aligners and then selects the best alignment based on fewest mismatches with the reference. Ties (alignments with the same score but differing on junction location) are broken by specific criteria, first favoring ungapped alignments over gapped ones, then annotated introns over unannotated ones, and finally shorter introns over longer ones. Under the hood, COMPASS handles numerous implementation details prior to scoring each alignment, including trimming and quality filtering of raw reads, disabling soft-clipping to ensure that aligners map the reads in their entirety, and reformatting alignment representations to ensure consistency for comparisons.
 
 ## 1) COMPASS_install_required_programs.sh
-  * Creates the compass environment in conda.
+  * Creates the compass environment in the conda package manager.
   * Installs samfixcigar from jvarkit.
 
 ## 2) COMPASS.sh:
