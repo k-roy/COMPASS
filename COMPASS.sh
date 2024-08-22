@@ -41,7 +41,8 @@ READS_TO_PROCESS=-1 # 1000000 #
 ALIGNERS_FILE=$COMPASS_DIR"sample_aligner_info.tsv"
 HISAT2_GENOME_DIR=$REFERENCE_DIR"HISAT2_annotated_index"
 
-# the introns file is needed for HISAT2
+# the introns file is needed for compare_splice_junctions_from_multiple_aligners.py
+# and analyze_exonic_and_intronic_sequence.py
 INTRONS_FILE=$REFERENCE_DIR"saccharomyces_cerevisiae_R64-2-1_20150113_introns.tsv"
 
 # The sample_aligner_info.txt file tells COMPASS which alignment programs to use from among
