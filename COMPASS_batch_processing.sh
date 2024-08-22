@@ -6,7 +6,7 @@
 #SBATCH --cpus-per-task=1
 #SBATCH --partition=interactive
 #SBATCH --account=default
-#SBATCH --time=12:00:00
+#SBATCH --time=24:00:00
 
 # This allows batch processing for a WT and mutant strain(s).
 # The input (or raw) fastq files should have the format:
