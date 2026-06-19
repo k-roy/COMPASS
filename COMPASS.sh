@@ -14,26 +14,26 @@ READS_TO_PROCESS=-1
 # Set to -1 for all reads after tests pass.
 
 # change $HOME variable to your desired directory
-COMPASS_DIR="$HOME/COMPASS/"
+COMPASS_DIR="$(cd "$(dirname "$0")" && pwd)/"  # human-a549: portable script-dir
 
 # download genome references and put into this folder
 REFERENCE_DIR=$COMPASS_DIR"genome_references/"
 
 # path to samfixcigar java program
-SAMFIXCIGAR=$COMPASS_DIR"jvarkit/dist/samfixcigar.jar"
+SAMFIXCIGAR=$COMPASS_DIR"samfixcigar.py"  # human-a549: pysam replacement for jvarkit
 
 # S. cerevisiae genome reference
-GENOME_VERSION="S288C_reference_sequence_R64-2-1_20150113_reformatted_chromosome_names"
+GENOME_VERSION="GRCh38_gencode_v44"  # human-a549
 
 FASTA=$REFERENCE_DIR$GENOME_VERSION".fasta"
 GFF=$REFERENCE_DIR$GENOME_VERSION".gff"
 GTF=$REFERENCE_DIR$GENOME_VERSION".gtf"
 NUM_THREADS=16
 MIN_INTRON_LENGTH=20
-MAX_INTRON_LENGTH=2000 # typically set to 200,000 for human introns
+MAX_INTRON_LENGTH=500000 # human-a549 (was 2000 for yeast)
 
 ACCESSION= # set to "NA" for datasets not on SRA
-READ_LENGTH=100
+READ_LENGTH=150  # human-a549: SG-NEx A549 Illumina PE150
 READS_TO_PROCESS=-1 # 1000000 # 
 # Subsample this many reads if SUBSAMPLE_READS is set to true.
 # set to -1 for all reads
@@ -43,12 +43,12 @@ HISAT2_GENOME_DIR=$REFERENCE_DIR"HISAT2_annotated_index"
 
 # the introns file is needed for compare_splice_junctions_from_multiple_aligners.py
 # and analyze_exonic_and_intronic_sequence.py
-INTRONS_FILE=$REFERENCE_DIR"saccharomyces_cerevisiae_R64-2-1_20150113_introns.tsv"
+INTRONS_FILE=$REFERENCE_DIR$GENOME_VERSION"_introns.tsv"
 
 # The sample_aligner_info.txt file tells COMPASS which alignment programs to use from among
 # BBMap, STAR (both default and noncanonical splicing modes), 
 # HISAT2 (both default and noncanonical splicing modes), Magic-BLAST, and GSNAP.
-ALIGNERS_FILE=$COMPASS_DIR"sample_aligner_info.txt"
+ALIGNERS_FILE=$COMPASS_DIR"sample_aligner_info.tsv"
 
 ## ASSIGN AND CREATE SUBDIRECTORIES
 NUMBERED_READS_DIR=$COMPASS_DIR"numbered_reads_fastq/"
@@ -70,7 +70,7 @@ mkdir $LOG_DIR
 conda activate compass
 
 # gffread is needed to convert the S. cerevisiae GFF file from SGD to GTF format
-gffread -T --force-exons --gene2exon $GFF -o $GTF $GFF
+# human-a549: gencode v44 GTF provided directly in genome_references/; SGD GFF->GTF skipped
 
 ####################### SAMPLE PROCESSING COMMANDS #######################
 echo "File name is "$0 # holds the current script

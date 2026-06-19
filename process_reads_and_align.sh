@@ -95,7 +95,7 @@ numbered_R2=$NUMBERED_READS_DIR$SAMPLE"_numbered_R2.fastq"
 ## AND LOW QUALITY BASES FROM BOTH ENDS IN ONE STEP WITH CUTADAPT
 ## cutadapt version 1.18
 
-cutadapt --overlap 2 --cores $NUM_THREADS -q 20,20 -g "T{100}" -a AGATCGGAAGAGC -A AGATCGGAAGAGC -A "A{100}" \
+cutadapt --overlap 2 --cores $NUM_THREADS -q 20,20 -a AGATCGGAAGAGC -A AGATCGGAAGAGC \
 -n 2 --trim-n --minimum-length 50 --max-n 4 -o $trimmed_R1 -p $trimmed_R2 $raw_R1 $raw_R2
 
 # ## --overlap 2 specifies that a partial match of 2 bases of the adapter SAMPLE will allow trimming
@@ -308,7 +308,7 @@ out=$RUN_MODE_DIR$SAMPLE;
 samtools sort -@ $NUM_THREADS -o $out"_coord_sorted.bam" $out".bam"
 rm $out".bam"
 ## samfixcigar produces consistent representation of mismatches as X and matches as M in SAM format 1.4
-java -jar $SAMFIXCIGAR --reference $FASTA --out $out"_reformatted_cigar.bam" --samoutputformat BAM $out"_coord_sorted.bam" 
+python "$SAMFIXCIGAR" $out"_coord_sorted.bam" $out"_reformatted_cigar.bam" "$FASTA"  # human-a549: pysam samfixcigar 
 # sort by read name, which is also read number in this case 
 samtools sort -n -@ $NUM_THREADS -o $out"_name_sorted.bam" $out"_reformatted_cigar.bam"
 rm $out"_coord_sorted.bam"
