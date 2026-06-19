@@ -32,8 +32,7 @@ for tid, exons in tx_exons.items():
             continue
         introns.setdefault((chrom, istart, iend, strand), gname + "_intron")
 
-with open(out, "w") as fh:
-    fh.write("chrom\tstart\tend\tstrand\ttype\tName\tintron_type\n")
+with open(out, "w") as fh:  # 5-col HEADERLESS: COMPASS_functions reads names=[chrom,start,stop,strand,intron_type]
     for (chrom, s, e, strand), name in sorted(introns.items()):
-        fh.write(f"{chrom}\t{s}\t{e}\t{strand}\tintron\t{name}\tspliceosomal_intron\n")
+        fh.write(f"{chrom}\t{s}\t{e}\t{strand}\tspliceosomal_intron\n")
 print(f"transcripts={len(tx_exons)} unique_introns={len(introns)}", file=sys.stderr)

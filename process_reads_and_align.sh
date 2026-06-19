@@ -146,7 +146,7 @@ DIR_TO_CHECK=$HISAT2_GENOME_DIR
 if [ -n "$(find "$DIR_TO_CHECK" -maxdepth 0 -type d -empty 2>/dev/null)" ]; then
     echo "HISAT2_GENOME_DIR is empty"
     samtools faidx $FASTA
-    picard CreateSequenceDictionary -R $FASTA
+    : # human-a549: picard CreateSequenceDictionary removed (was for jvarkit .dict; pysam samfixcigar needs none)
     hisat2_extract_splice_sites.py $GTF > $SPLICE_SITES
     hisat2_extract_exons.py $GTF > $EXONS
     hisat2-build -p $NUM_THREADS --ss $SPLICE_SITES --exon $EXONS $FASTA $HISAT2_INDEX

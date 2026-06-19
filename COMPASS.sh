@@ -42,7 +42,7 @@ ALIGNERS_FILE=$COMPASS_DIR"sample_aligner_info.tsv"
 HISAT2_GENOME_DIR=$REFERENCE_DIR"HISAT2_annotated_index"
 
 # the introns file is needed for compare_splice_junctions_from_multiple_aligners.py
-# and analyze_exonic_and_intronic_sequence.py
+# and analyze_exonic_and_intronic_elements.py
 INTRONS_FILE=$REFERENCE_DIR$GENOME_VERSION"_introns.tsv"
 
 # The sample_aligner_info.txt file tells COMPASS which alignment programs to use from among
@@ -100,11 +100,11 @@ python compare_splice_junctions_from_multiple_aligners.py \
 "$MIN_INTRON_LENGTH" "$MAX_INTRON_LENGTH" "$ALIGNERS_FILE" "$READS_TO_PROCESS" \
 > $LOG_DIR$SAMPLE"_compare_splice_junctions_from_multiple_aligners_sh_output.log" 2>&1
 
-echo "starting analyze_exonic_and_intronic_sequence.py for "$SAMPLE;
-python analyze_exonic_and_intronic_sequence.py \
+echo "starting analyze_exonic_and_intronic_elements.py for "$SAMPLE;
+python analyze_exonic_and_intronic_elements.py \
 "$COMPASS_DIR" "$REFERENCE_DIR" "$SAMPLE" "$FASTA" "$INTRONS_FILE" "$NUM_THREADS" \
 "$MIN_INTRON_LENGTH" "$MAX_INTRON_LENGTH" "$ALIGNERS_FILE" "$READS_TO_PROCESS" \
-> $LOG_DIR$SAMPLE"_analyze_exonic_and_intronic_sequence_sh_output.log" 2>&1
+> $LOG_DIR$SAMPLE"_analyze_exonic_and_intronic_elements_sh_output.log" 2>&1
 
 echo "starting create_splice_site_bed.py for "$SAMPLE;
 python create_splice_site_bed.py $COMPASS_JUNCTIONS_DIR $SAMPLE
